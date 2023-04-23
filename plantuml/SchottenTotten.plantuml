@@ -1,0 +1,48 @@
+@startuml SchottenTotten
+class Jeu {
+  - Joueurs joueurs
+  - Ordre determinerOrdre()
+  - void traiterResultat(Ordre ordre, Resultat resultat)
+  + void jouerPartie(Edition edition, Variante variante)
+}
+
+class EditionProducer {
+  + AbstractEdition getEdition(Edition edition)
+}
+
+abstract AbstractEdition {
+  + Partie getPartie(Variante variante)
+}
+
+enum Edition {
+  Premiere
+  Deuxieme
+}
+
+enum Variante {
+  Normale 
+  Tactique
+  Experts
+}
+
+' class PremiereFactory {
+' }
+
+' class DeuxiemeFactory {
+' }
+
+class Joueur {
+  + string nom
+  + bool ia
+  + int score
+}
+
+' PremiereFactory --|> AbstractEdition
+' DeuxiemeFactory --|> AbstractEdition
+Jeu *--"2" Joueur
+Jeu *--"1" EditionProducer
+' Jeu *--"n" Partie
+
+EditionProducer -- AbstractEdition : <<factory>>
+AbstractEdition -- Partie : <<factory>>
+@enduml

@@ -1,0 +1,70 @@
+@startuml partie 
+skinparam groupInheritance 2
+
+' namespace FactoryPattern{
+'     class PartieFactory{
+'         getPartie() : Partie
+'     }
+'     PartieFactory - Partie : get >
+'     interface Partie {
+'         commencer()
+'         jouerTour()
+'         testerFin()
+'         terminer()
+'     }
+
+'     Partie <|-- Premiere
+'     Partie <|-- Deuxieme
+'     abstract Premiere
+'     abstract Deuxieme
+'     Premiere <|-- PremiereNormale 
+'     Premiere <|-- PremiereTactique
+'     Premiere <|-- PremiereExperts
+'     Deuxieme <|-- DeuxiemeNormale
+'     Deuxieme <|-- DeuxiemeTactique
+' }
+
+namespace AbstractFactoryPattern{
+    class FactoryProducer{
+        getFactory() : AbstractFactory
+    }
+
+    namespace Factory{
+        abstract AbstractFactory
+        class PremiereFactory
+        class DeuxiemeFactory
+
+        AbstractFactoryPattern.FactoryProducer - AbstractFactory : get >
+        AbstractFactory <|-- PremiereFactory
+        AbstractFactory <|-- DeuxiemeFactory
+
+        abstract AbstractFactory {
+            getPartie() : Partie
+        }
+    }
+
+    namespace Variante{
+        interface Partie {
+            commencer()
+            jouerTour()
+            testerFin()
+            terminer()
+        }
+
+        AbstractFactoryPattern.Factory.AbstractFactory - Partie : get >
+        Partie <|-- Premiere
+        Partie <|-- Deuxieme
+        abstract Premiere
+        abstract Deuxieme
+        Premiere <|-- PremiereNormale 
+        Premiere <|-- PremiereTactique
+        Premiere <|-- PremiereExperts
+        Deuxieme <|-- DeuxiemeNormale
+        Deuxieme <|-- DeuxiemeTactique
+    }
+}
+
+
+AbstractFactoryPattern.FactoryProducer -[hidden] AbstractFactoryPattern.Factory.PremiereFactory
+' FactoryPattern.PremiereNormale --[hidden]-- AbstractFactoryPattern.FactoryProducer
+@enduml
