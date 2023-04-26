@@ -2,11 +2,13 @@
 #define PARTIE_H
 
 #include <string>
+#include "schotten_totten.h"
 
 using namespace std;
 
 using Resultat = array<int, 2>;
 using Force = size_t;
+using Movement = string;
 
 enum class Couleur
 {
@@ -20,31 +22,29 @@ enum class Couleur
 
 class Partie
 {
-    // private:
-    // CarteNormale cartes[];
-    // Frontiere frontiere;
-    // Agent agent[2];
-    // bool revendiquerAutomatique;
 public:
-    virtual void commencer();
-    virtual void jouerTour();
-    virtual bool testerFin();
-    virtual Resultat terminer();
+    void commencer(Ordre ordre);
+    void jouerTour();
+    bool testerFin();
+    Resultat terminer();
     Partie();
     ~Partie();
 };
 
 class Premiere : public Partie
 {
-public:
-    void commencer() override;
-    void jouerTour() override;
-    bool testerFin() override;
-    Resultat terminer() override;
 };
 
 class PremiereNormale : public Premiere
 {
+public:
+    void commencer(Ordre ordre);
+    void jouerTour();
+    bool testerFin();
+    Resultat terminer();
+    PremiereNormale();
+    ~PremiereNormale();
+
 private:
     static const int NCOULEUR = 6;
     static const int FORCEMIN = 1;
@@ -52,73 +52,57 @@ private:
     static const int NFORCE = FORCEMAX - FORCEMIN + 1;
     static const int NCARTENORMALE = NCOULEUR * NFORCE;
     static const int NMAIN = 6;
+
+    Agent agents[2];
+    int agentActive;
+
     using TableauJouee = array<array<bool, NFORCE>, NCOULEUR>;
     TableauJouee tableauJouee;
-    using CartesNormales = array<Carte *, NCOULEUR * NFORCE>;
-    CartesNormales cartesNormales;
-    void initierPiocheNormale();
-    void initierMain();
-    void piocher();
+    bool jouee(Couleur couleur, Force force);
 
-public:
-    void commencer() final;
-    void jouerTour() final;
-    bool testerFin() final;
-    Resultat terminer() final;
-    PremiereNormale();
-    ~PremiereNormale();
+    Pioche<CarteNormale, NCARTENORMALE> piocheNormale;
+    Frontiere frontiere;
+
+    void initierPiocheNormale();
+    void initierMains();
+    void initierAgents(Ordre ordre);
+    void agentSuivant();
 };
 
-PremiereNormale::PremiereNormale(){
-
-}
-
-void PremiereNormale::commencer()
-{
-    initierPiocheNormale();
-    initierMain();
-}
-
-void PremiereNormale::initierPiocheNormale()
-{
-    Pioche<CarteNormale*, NCARTENORMALE> piocheNormale();
-    for (int i = 0; i < NCOULEUR; ++i)
-        for (int j = 0; j < NFORCE; ++j)
-            piocheNormale[i * NCOULEUR + j] = (CarteNormale*) new CarteNormale((Couleur)i, (Force)j + FORCEMIN);
-}
-
-void PremiereNormale::piocher()
-{
-}
-
 template <class Carte, size_t N>
-class Pioche : public array<Carte, N>
+class Pioche
 {
-private:
-    array<Carte, N> cartes;
-    size_t nbCartes = 0;
-    vector<Carte> cartesDessous;
-
 public:
     bool estVide() const { return nbCartes == 0; };
     size_t getNbCartes() const { return nbCartes; };
-    Carte& piocher() ;
-    void placerDessous(Carte& carte) ;
-    Pioche() : cartes(), nbCartes(N) {};
-    Carte& operator[] (size_t i) const { return cartes[i]; };
+    bool piocher(Carte &carte) { if (estVide()) return false; carte = getCarte(); return true; };
+    void placerDessous(Carte &carte);
+    Pioche() : cartes(), nbCartes(N){};
+    Carte &operator[](size_t i) const { return &cartes[i]; };
+
+private:
+    array<Carte &, N> cartes;
+    size_t nbCartes = 0;
+    vector<Carte> cartesDessous;
+    Carte &getCarte();
 };
 
-class Carte{};
-
-class CarteNormale : Carte
+class Carte
 {
-private:
-    // bool jouee;
-    Couleur couleur;
-    Force force;
+public:
+    string getInfo() const;
+    string getDescription() const;
+};
 
+class CarteNormale : public Carte
+{
 public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){};
+    CarteNormale() = default;
+
+private:
+    Couleur couleur;
+    Force force;
 };
 
 class Tuile
@@ -131,6 +115,26 @@ class Frontiere
 
 class Agent
 {
+public:
+    Movement jouer(const Frontiere &frontiere);
+    void piocher(const Carte &carte);
+    Agent();
+
+private:
+    Main main;
+};
+
+class Main
+{
+public:
+    bool estVide() const { return nbCartes == 0; };
+    size_t getNbCartes() const { return nbCartes; };
+    Carte &jouerCarte(size_t i);
+    void piocherCarte(Carte &carte);
+
+private:
+    vector<Carte &> cartes;
+    size_t nbCartes = 0;
 };
 
 #endif

@@ -1,15 +1,24 @@
 @startuml SchottenTotten
 
-class Carte {
+interface Partie {
+    ' édition : texte 
+    revendiquerAutomatique : bool 
+    commencer()
+    jouerTour()
+    testerFin() : bool
+    terminer() : Resultat
+}
 
-    jouée : booléen
+class Carte {
+    info : string 
+    description : string
 }
 
 class CarteNormale {
-
     couleur : Couleur
     force : int 
 }
+
 enum Couleur {
     rouge
     bleu
@@ -18,43 +27,37 @@ enum Couleur {
     violet
     marron
 }
-class CarteTactique {
 
+class CarteTactique {
     appliquer(Partie)
 }
+
 class Main {
-
-    piocher(Pioche)
-    jouer(Carte, Tuile)
+    piocher(Carte)
+    jouer(Carte)
 }
+
 class Pioche {
-
-    mélanger()
-    estVide() : booléen
+    piocher() : bool, Carte
+    placerDessous(Carte)
+    estVide() : bool
+    getNbCartes() : int
 }
+
 class Tuile {
-
-    estPleine() : booléen
-    estRevendiquée() : booléen
+    estPleine() : bool
+    estRevendiquée() : bool
     revendiquer()
-    comparer() : entier
+    comparer() : int
 }
-class Frontière {
 
-    estFinie() : booléen
+class Frontiere {
+    estFinie() : bool
     gagnant() : Joueur
 }
-class Agent {
 
-    jouerCarte(Main, Frontière) : CarteTuile
-}
-interface Partie {
-    ' édition : texte 
-    revendiquerAutomatique : booléen 
-    commencer()
-    jouerTour()
-    testerFin()
-    terminer()
+class Agent {
+    jouer(Frontiere) : Movement
 }
 
 Carte <|-- CarteNormale
@@ -62,14 +65,14 @@ Carte <|-- CarteTactique
 Main o-- "6" Carte
 Pioche o-- "n" Carte
 Tuile o-- “0…6” Carte
-Frontière *-- “9” Tuile
+Frontiere *-- “9” Tuile
 
-Agent -- Frontière : observer >
-Agent -- Main : observer >
+' Agent -- Frontiere : observer >
+' Agent -- Main : observer >
 
-Agent -- Carte : jouer >
-Agent -- Tuile : jouer >
+' Agent -- Carte : jouer >
+' Agent -- Tuile : jouer >
 
-Main -- Pioche : piocher >
+' Main -- Pioche : piocher >
 
 @enduml

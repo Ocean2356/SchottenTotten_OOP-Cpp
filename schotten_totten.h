@@ -23,17 +23,18 @@ enum class Variante
 
 class Jeu
 {
-private:
-    // Joueur joueurA;
-    // Joueur joueurB;
-    Joueurs joueurs;
-    Ordre determinerOrdre();
-    void traiterResultat(Ordre ordre, Resultat resultat);
-
 public:
     void jouerPartie(Edition edition, Variante variante);
     Jeu() : joueurs(){};
     ~Jeu() = default;
+
+private:
+    // Joueur joueurA;
+    // Joueur joueurB;
+    Joueurs joueurs;
+    EditionProducer editionProducer;
+    Ordre determinerOrdre();
+    void traiterResultat(Ordre ordre, Resultat resultat);
 };
 
 void Jeu::jouerPartie(Edition edition, Variante variante)
@@ -41,11 +42,10 @@ void Jeu::jouerPartie(Edition edition, Variante variante)
     Ordre ordre = determinerOrdre();
 
     // abstract factory pattern
-    EditionProducer editionProducer;
     AbstractEdition abstractEdition = editionProducer.getEdition(edition);
     Partie partie = abstractEdition.getPartie(variante);
 
-    partie.commencer();
+    partie.commencer(ordre);
     while (!partie.testerFin())
         partie.jouerTour();
     Resultat resultat = partie.terminer();
@@ -74,10 +74,10 @@ class DeuxiemeFactory : AbstractEdition
 
 class Joueur
 {
-private:
 public:
     string nom;
-    bool ia;
+    // bool ia;
+    Agent agent;
     int score;
     Joueur();
     ~Joueur() = default;
