@@ -27,33 +27,6 @@ enum class Couleur
 };
 
 
-
-
-template <class Carte, size_t N>
-class Pioche
-{
-public:
-    bool estVide() const { return nbCartes == 0; };
-    size_t getNbCartes() const { return nbCartes; };
-    bool piocher(Carte &carte) {
-        if (estVide())
-            return false;
-        carte = getCarte();
-        return true;
-    };
-    void placerDessous(Carte &carte){
-        cartes[cartes.size()] = carte;
-    };
-    Pioche(): cartes(), nbCartes(N){};
-    Carte &operator[](size_t i) const { return &cartes[i]; };
-
-private:
-    array<Carte *, N> cartes;
-    size_t nbCartes = 0;
-    vector<Carte> cartesDessous;
-    Carte &getCarte();
-};
-
 class Carte
 {
 public:
@@ -73,6 +46,38 @@ private:
     Couleur couleur;
     Force force;
 };
+
+template <class Carte, size_t N>
+class Pioche
+{
+public:
+    bool estVide() const { return nbCartes == 0; }
+    size_t getNbCartes() const { return nbCartes; }
+    bool piocher(const Carte& carte) {
+        if (estVide())
+            return false;
+        size_t x = rand()%nbCartes;
+        carte = cartes[x]; // creation d'une référence sur la carte piochee
+        cartes[x] = cartes[--nbCartes];  // déplacement de la dernière carte à l'emplacement de la carte piochée
+        return true;
+    }
+    Pioche(): cartes(), nbCartes(N){};
+    Carte &operator[](size_t i) const { return &cartes[i]; }
+
+private:
+    array<Carte *, N> cartes;
+    size_t nbCartes = 0;
+};
+
+/*
+class PiochePartieTactique : public Pioche{
+public:
+     void placerDessous(Carte &carte);
+private:
+     vector<Carte> cartesDessous;
+};
+*/
+
 
 class Tuile
 {
