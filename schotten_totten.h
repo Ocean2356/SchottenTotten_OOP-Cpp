@@ -2,11 +2,10 @@
 #define SCHOTTEN_TOTTEN_H
 
 #include <string>
+#include <array>
 #include "partie.h"
 
-using namespace std;
 
-using Ordre = array<Joueur &, 2>;
 using Joueurs = array<Joueur, 2>;
 
 enum class Edition
@@ -25,7 +24,7 @@ class Jeu
 {
 public:
     void jouerPartie(Edition edition, Variante variante);
-    Jeu() : joueurs(){};
+    Jeu()joueurs({nullptr, nullptr}){}
     ~Jeu() = default;
 
 private:
@@ -72,15 +71,6 @@ class DeuxiemeFactory : AbstractEdition
 {
 };
 
-class Joueur
-{
-public:
-    string nom;
-    // bool ia;
-    Agent agent;
-    int score;
-    Joueur();
-    ~Joueur() = default;
-};
 
 #endif
+
