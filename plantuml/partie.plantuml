@@ -1,6 +1,6 @@
 @startuml SchottenTotten
 
-interface Partie {
+abstract Partie {
     ' édition : texte 
     revendiquerAutomatique : bool 
     commencer()
@@ -26,6 +26,18 @@ enum Couleur {
     jaune
     violet
     marron
+}
+
+enum Force {
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
 }
 
 class CarteTactique {

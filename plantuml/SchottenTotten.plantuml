@@ -35,6 +35,7 @@ class Joueur {
   + string nom
   + bool ia
   + int score
+  + Agent agent
 }
 
 ' PremiereFactory --|> AbstractEdition
@@ -42,6 +43,8 @@ class Joueur {
 Jeu *--"2" Joueur
 Jeu *--"1" EditionProducer
 ' Jeu *--"n" Partie
+
+abstract Partie
 
 EditionProducer -- AbstractEdition : <<factory>>
 AbstractEdition -- Partie : <<factory>>

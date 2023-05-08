@@ -7,8 +7,6 @@
 
 class Joueur;
 
-
-
 using namespace std;
 using Force = size_t;
 using Ordre = array<Joueur&, 2>;
@@ -57,12 +55,13 @@ public:
         if (estVide())
             return false;
         size_t x = rand()%nbCartes;
-        carte = cartes[x]; // creation d'une rÈfÈrence sur la carte piochee
-        cartes[x] = cartes[--nbCartes];  // dÈplacement de la derniËre carte ‡ l'emplacement de la carte piochÈe
+        carte = cartes[x]; // creation d'une r√©f√©rence sur la carte piochee
+        cartes[x] = cartes[--nbCartes];  // d√©placement de la derni√®re carte √† l'emplacement de la carte pioche
+        // il faut utiliser 'swap', et de plus v√©rifier le fonctionnement de & : on veut que la contenue r√©elle de l'objet carte soit pioch√©e, pas la carte qui se trouve dans cartes[x]
         return true;
     }
     Pioche(): cartes(), nbCartes(N){};
-    Carte &operator[](size_t i) const { return &cartes[i]; }
+    Carte& operator[](size_t i) const { return &cartes[i]; }
 
 private:
     array<Carte *, N> cartes;

@@ -1,11 +1,11 @@
 @startuml partie 
 skinparam groupInheritance 2
 
-' namespace FactoryPattern{
-'     class PartieFactory{
+' namespace EditionPattern{
+'     class PartieEdition{
 '         getPartie() : Partie
 '     }
-'     PartieFactory - Partie : get >
+'     PartieEdition - Partie : get >
 '     interface Partie {
 '         commencer()
 '         jouerTour()
@@ -24,34 +24,34 @@ skinparam groupInheritance 2
 '     Deuxieme <|-- DeuxiemeTactique
 ' }
 
-namespace AbstractFactoryPattern{
-    class FactoryProducer{
-        getFactory() : AbstractFactory
+namespace AbstractEditionPattern{
+    class EditionProducer{
+        getEdition() : AbstractEdition
     }
 
-    namespace Factory{
-        abstract AbstractFactory
-        class PremiereFactory
-        class DeuxiemeFactory
+    namespace Edition{
+        abstract AbstractEdition
+        class PremiereEdition
+        class DeuxiemeEdition
 
-        AbstractFactoryPattern.FactoryProducer - AbstractFactory : get >
-        AbstractFactory <|-- PremiereFactory
-        AbstractFactory <|-- DeuxiemeFactory
+        AbstractEditionPattern.EditionProducer - AbstractEdition : get >
+        AbstractEdition <|-- PremiereEdition
+        AbstractEdition <|-- DeuxiemeEdition
 
-        abstract AbstractFactory {
-            getPartie() : Partie
+        abstract AbstractEdition {
+            getPartie() : Partie {abstract}
         }
     }
 
     namespace Variante{
-        interface Partie {
-            commencer()
-            jouerTour()
-            testerFin()
-            terminer()
+        abstract Partie {
+            commencer() {abstract}
+            jouerTour() {abstract}
+            testerFin() {abstract}
+            terminer() {abstract}
         }
 
-        AbstractFactoryPattern.Factory.AbstractFactory - Partie : get >
+        AbstractEditionPattern.Edition.AbstractEdition - Partie : get >
         Partie <|-- Premiere
         Partie <|-- Deuxieme
         abstract Premiere
@@ -65,6 +65,6 @@ namespace AbstractFactoryPattern{
 }
 
 
-AbstractFactoryPattern.FactoryProducer -[hidden] AbstractFactoryPattern.Factory.PremiereFactory
-' FactoryPattern.PremiereNormale --[hidden]-- AbstractFactoryPattern.FactoryProducer
+AbstractEditionPattern.EditionProducer -[hidden] AbstractEditionPattern.Edition.PremiereEdition
+' EditionPattern.PremiereNormale --[hidden]-- AbstractEditionPattern.EditionProducer
 @enduml
