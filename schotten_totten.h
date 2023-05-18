@@ -20,55 +20,50 @@ enum class Variante
     Experts
 };
 
-class Jeu
-{
-public:
-    void jouerPartie(Edition edition, Variante variante);
-    Jeu()joueurs({nullptr, nullptr}){}
-    ~Jeu() = default;
+string toString(Edition e);
+string toString(Variante v);
 
-private:
-    // Joueur joueurA;
-    // Joueur joueurB;
-    Joueurs joueurs;
-    EditionProducer editionProducer;
-    Ordre determinerOrdre();
-    void traiterResultat(Ordre ordre, Resultat resultat);
-};
-
-void Jeu::jouerPartie(Edition edition, Variante variante)
-{
-    Ordre ordre = determinerOrdre();
-
-    // abstract factory pattern
-    AbstractEdition abstractEdition = editionProducer.getEdition(edition);
-    Partie partie = abstractEdition.getPartie(variante);
-
-    partie.commencer(ordre);
-    while (!partie.testerFin())
-        partie.jouerTour();
-    Resultat resultat = partie.terminer();
-    traiterResultat(ordre, resultat);
-}
-
-class EditionProducer
-{
-public:
-    AbstractEdition getEdition(Edition edition);
-};
+extern std::initializer_list<Edition> Editions;
+extern std::initializer_list<Variante> Variantes;
 
 class AbstractEdition
 {
 public:
-    virtual Partie getPartie(Variante variante);
+    virtual Partie* getPartie(Variante variante);
 };
 
-class PremiereFactory : AbstractEdition
+class PremiereFactory : public AbstractEdition
 {
+    Partie* getPartie(Variante variante);
 };
 
-class DeuxiemeFactory : AbstractEdition
+class DeuxiemeFactory : public AbstractEdition
 {
+    Partie* getPartie(Variante variante);
+};
+
+class EditionProducer
+{
+public:
+    AbstractEdition* getEdition(Edition edition);
+};
+
+
+class Jeu
+{
+public:
+    void commencer_jeu(size_t taille_main);
+    Ordre determinerOrdre();
+    void traiterResultat(Ordre ordre, Resultat resultat);
+    void jouerPartie(Edition edition, Variante variante);
+    Jeu():joueurs{Joueur(6), Joueur(6)}{}  // reprendre, 6 doit être remplacé par la taille de la main
+    ~Jeu() = default;
+    Joueurs joueurs;
+private:
+    // Joueur joueurA;
+    // Joueur joueurB;
+
+    EditionProducer editionProducer;
 };
 
 
