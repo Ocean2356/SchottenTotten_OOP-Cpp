@@ -1,38 +1,54 @@
 @startuml diagramme de séquence
-actor Joueur
 
-Joueur -> Main: piocherCartes()
-Joueur -> PartieNormale: commencer()
-activate PartieNormale
-PartieNormale -> Main: getMain(Joueur)
+skinparam responseMessageBelowArrow true
+
+participant Jeu
+participant PremiereNormale
+participant "Tuile/Frontière" as Tuile
+participant PiocheNormale
+participant Main
+actor Agent
+
+Jeu -> PremiereNormale: jouerPartie(Edition, Variante)
+activate PremiereNormale
+PremiereNormale -> PiocheNormale: initierPioche()
+activate PiocheNormale
+Jeu -> Jeu: determinerOrdre()
+Jeu -> PremiereNormale: commencer(Ordre)
+PremiereNormale -> Main: initierMain()
 activate Main
-Main -> Joueur: getCartes()
-deactivate Main
-PartieNormale -> Joueur: afficherMain(Cartes)
-PartieNormale -> Joueur: choisirCarte()
-activate Joueur
-Joueur -> PartieNormale: jouerCarte(Carte)
-deactivate Joueur
-PartieNormale -> Pioche: piocherCarte()
-activate Pioche
-Pioche -> PartieNormale: getCarte()
-deactivate Pioche
-PartieNormale -> PartieNormale: ajouterCarteMain(Carte)
-PartieNormale -> Joueur: afficherMain(Cartes)
-PartieNormale -> Joueur: choisirCarte()
-activate Joueur
-Joueur -> PartieNormale: jouerCarte(Carte)
-deactivate Joueur
-PartieNormale -> Tuile: revendiquerTuile(Carte)
-activate Tuile
-Tuile -> PartieNormale: estPartieTerminee()
-deactivate Tuile
-PartieNormale -> PartieNormale: testerFin()
-PartieNormale -> Joueur: afficherResultat(Resultat)
-PartieNormale -> Joueur: afficherMessage(Message)
-PartieNormale -> Joueur: rejouer()
-activate Joueur
-Joueur -> PartieNormale: commencer()
-deactivate Joueur
-deactivate PartieNormale
+PremiereNormale -> Agent: initierAgent()
+activate Agent
+
+loop tour de jeu
+    Jeu -> PremiereNormale: testerFin()
+    Jeu -> PremiereNormale: jouerTour()
+    group jouer
+        PremiereNormale -> Agent: jouer(Frontière)
+        activate Agent
+        Agent -> Agent: choisirCarte()
+        Agent -> Agent: choisirTuile()
+        Agent -> Agent: choisirRevendiquer()
+        Agent -> PremiereNormale: Mouvement
+        deactivate Agent
+        PremiereNormale -> Agent: jouerCarte(Frontière, Carte, Borne, Agent)
+        PremiereNormale -> Agent: revendiquerBorne(Frontière, Borne, Agent)
+        Agent -> Tuile: revendiquerBorne(Frontière, Borne, Agent)
+    end
+    
+    group piocher
+        PremiereNormale -> PiocheNormale: piocher(Carte)
+        PremiereNormale -> Agent: piocher(Carte)
+    end
+
+    PremiereNormale -> PremiereNormale: agentSuivant()
+    deactivate PiocheNormale
+    deactivate Main
+    deactivate Agent
+end
+
+Jeu -> PremiereNormale: terminer()
+deactivate PremiereNormale
+Jeu -> Jeu: traiterResultats()
+
 @enduml
