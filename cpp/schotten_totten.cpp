@@ -26,14 +26,14 @@ Edition choixEdition(){
     unsigned int i=0;
     for (auto e : Editions){
         i++;
-        cout<<"Edition "<<i<<": "<<toString(e)<<"\n";
+        cout<<"Entrez "<<i<<" pour jouer a l'edition "<<toString(e)<<"\n";
     }
     unsigned int choix;
     do{
         cout<<"Votre choix: ";
         cin>>choix;
     }while(choix<1 || choix>i);
-    return (Edition) choix;
+    return (Edition) (choix - 1);
 }
 
 Variante choixVariante(){
@@ -41,14 +41,14 @@ Variante choixVariante(){
     unsigned int i=0;
     for (auto v : Variantes){
         i++;
-        cout<<"Variante "<<i<<": "<<toString(v)<<"\n";
+        cout<<"Entrez "<<i<<" pour jouer a la variante "<<toString(v)<<"\n";
     }
     unsigned int choix;
     do{
         cout<<"Votre choix: ";
         cin>>choix;
     }while(choix<1 || choix>i);
-    return (Variante) choix;
+    return (Variante) (choix - 1);
 }
 
 void Jeu::commencer_jeu(size_t taille_main) {
@@ -70,14 +70,19 @@ Ordre Jeu::determinerOrdre(){
     cout << "Choix de l'ordre des joueurs\n";
     cout << "Rappel des noms des joueurs\n";
     for (size_t i=0; i<joueurs.size(); i++)
-        cout << joueurs[i].getNom() << "\n";
+        cout << "Entrez " << i+1 << " pour que le joueur " << joueurs[i].getNom() << " commence\n";
 
-    cout<<"Entrez le nom du joueur qui commence : ";
-    string nom;
-    cin>>nom;
+    int choix;
+    do{
+        cout<<"Votre choix : ";
+        cin>>choix;
+    }while (choix < 1 || choix >joueurs.size());
 
-    if (joueurs[0].getNom() == nom)
-        ordre[0] = &joueurs[0];
+    ordre[0] = &joueurs[choix];
+    for (size_t i=0; i<joueurs.size(); i++)
+        if (choix != i)
+            ordre[i+1] = &joueurs[i];
+
     return ordre;
 }
 
@@ -85,20 +90,39 @@ Ordre Jeu::determinerOrdre(){
 void Jeu::jouerPartie(Edition edition, Variante variante)
 {
     // abstract factory pattern
-    AbstractEdition abstractEdition = *editionProducer.getEdition(edition);
-    Partie partie = *abstractEdition.getPartie(variante);
 
+    AbstractEdition* abstractEdition = editionProducer.getEdition(edition);
+
+    Partie* partie = abstractEdition->getPartie(variante);
     Ordre ordre = determinerOrdre();
-    partie.commencer(ordre);
-    while (!partie.testerFin())
-        partie.jouerTour();
-    Resultat resultat = partie.terminer();
+
+    partie->commencer(ordre);
+
+    while (!partie->testerFin())
+        partie->jouerTour();
+
+    Resultat resultat = partie->terminer();
     traiterResultat(ordre, resultat);
 }
 
 void Jeu::traiterResultat(Ordre ordre, Resultat resultat){
-    for (size_t i =0; i<resultat.size(); i++)
+    size_t joueur_gagnant = 0;
+    size_t max_points = resultat[0];
+    for (size_t i = 0; i<resultat.size(); i++) {
         ordre[i]->setScore(resultat[i]);
+        if (max_points < resultat[i]) {
+            max_points = resultat[i];
+            joueur_gagnant = i;
+        }
+    }
+    cout << "Le joueur " << ordre[joueur_gagnant]->getNom() << "gagne et remporte " << resultat[joueur_gagnant]
+        <<"points !\n";
+    cout << "Affichage des scores :";
+    for (size_t i = 0; i<resultat.size(); i++) {
+        cout << "Nouveau score du joueur " << ordre[joueur_gagnant]->getNom()
+            << " = " << ordre[joueur_gagnant]->getScore() <<"\n";
+    }
+
 }
 
 AbstractEdition* EditionProducer::getEdition(Edition edition)

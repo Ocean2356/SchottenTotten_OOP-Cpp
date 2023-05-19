@@ -81,29 +81,35 @@ public:
     bool estVide() const { return nbCartes == 0; };
     size_t getNbCartes() const { return nbCartes; };
 
-    bool piocher(Carte &carte) {
+    bool piocher(Carte& carte) {
         if (estVide())
-            return false;  //  throw PartieException("la pioche est vide, on ne peut pas piocher");
+            return false;
         carte = getCarte();
+        // cout << carte;
         return true;
     };
     void placerDessous(Carte &carte){
-        // A REPRENDRE
+        // A REPRENDRE, nécessaire pour implémenter la version tactique
         cartes[cartes.size()] = carte;
     };
     Pioche(): cartes(), nbCartes(N) {
         for (size_t i=0; i<N;i++)
             cartes[i] = new Carte();
-    } // A REPRENDRE
+    }
+    ~Pioche(){
+        for (size_t i=0; i<N; i++){
+            delete cartes[i];
+        }
+    }
     Carte& operator[](size_t i) const { return *cartes[i]; }
 
 private:
     array<Carte*, N> cartes;
     size_t nbCartes = 0;
-    // vector<Carte> cartesDessous; TODO
-    const Carte& getCarte(){
+    // vector<Carte> cartesDessous; TODO pour la version tactique
+    Carte getCarte(){
         size_t x = rand()%nbCartes;
-        const Carte& c = *cartes[x]; // creation d'une référence sur la carte piochee
+        Carte c = *cartes[x];
         cartes[x] = cartes[--nbCartes];  // déplacement de la dernière carte à l'emplacement de la carte piochée
         return c;
     }
@@ -141,7 +147,7 @@ public:
     bool estRevendiquee() const;
 private:
     array<vector<Carte>, 2> cartes_posees;
-    //CarteTactique carte_posee_centre;
+    //CarteTactique carte_posee_centre;  // A implémenter pour la version tactique
     unsigned int nb_pleine;
     NumJoueur rempli_en_premier;
     TuileRevendiquee revendiquee;
@@ -181,8 +187,10 @@ class Agent
 {
 public:
     Movement jouer(const Frontiere &frontiere, NumJoueur joueur_num);
-    void jouerCarte(Frontiere& frontiere, size_t pos_carte, size_t pos_borne, NumJoueur joueur_num){
+    void jouerCarte(Frontiere& frontiere, size_t pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul){
         const Carte& c = main.jouerCarte(pos_carte);
+        f = c.getForce();
+        coul = c.getCouleur();
         frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);
     }
     void revendiquerBorne(Frontiere& frontiere, unsigned int num_borne, NumJoueur joueur_num){
@@ -209,17 +217,16 @@ public:
 private:
     string nom;
     unsigned int score;
-    // bool ia;
+    // bool ia;  // à ajouter lorsque l'on implémentera la possibilité de jouer contre une ia
     Agent agent;
-    // REVOIR public/private
 };
 
 class Partie
 {
 public:
-    void commencer(Ordre ordre);
-    void jouerTour();
-    bool testerFin();
+    virtual void commencer(Ordre ordre);
+    virtual void jouerTour();
+    virtual bool testerFin();
     Resultat terminer();
     Partie()=default;
     ~Partie()=default;
@@ -228,10 +235,7 @@ protected:
 };
 
 class Premiere : public Partie{
-public:
-    void commencer(Ordre ordre);
-    void jouerTour();
-    bool testerFin();
+
 protected:
     static const int NCOULEUR = 6;
     static const int FORCEMIN = 1;
@@ -243,8 +247,12 @@ protected:
 class PremiereNormale : public Premiere
 {
 public:
-    PremiereNormale(); // modifié
-    ~PremiereNormale()=default; // TODO
+    PremiereNormale();
+    ~PremiereNormale(){
+        for (size_t i=0; i<NCARTENORMALE; i++){
+            delete piocheNormale[i];
+        }
+    }
     void commencer(Ordre ordre);
     void jouerTour();
 
@@ -256,7 +264,6 @@ private:
 
     using TableauJouee = array<array<bool, NFORCE>, NCOULEUR>;
     TableauJouee tableauJouee;
-    bool jouee(Couleur couleur, Force force);
 
     Pioche<CarteNormale*, NCARTENORMALE> piocheNormale;
     void initierPiocheNormale();

@@ -46,8 +46,10 @@ std::ostream& operator<<(std::ostream& f, const Carte& c){ // REVOIR POUR CARTE
 PremiereNormale::PremiereNormale()
 {
     initierPiocheNormale();
-//    initierMains();
-//    initierAgents(ordre);
+    for (size_t i = 0; i<NFORCE; i++){
+        for (size_t j = 0; i< NCOULEUR; i++)
+            tableauJouee[i][j] = false;
+    }
 }
 
 void PremiereNormale::initierAgents(Ordre ordre){
@@ -149,7 +151,7 @@ bool Tuile::verif_meme_couleur(NumJoueur num_joueur) const{
 bool Tuile::verif_meme_force(NumJoueur num_joueur) const{
     Force force = cartes_posees[(int) num_joueur][0].getForce();
     for (size_t i=1; i<nb_pleine; i++){
-        if (cartes_posees[(int) num_joueur][0].getForce() != force)
+        if (cartes_posees[(int) num_joueur][i].getForce() != force)
             return false;
     }
     return true;
@@ -189,6 +191,7 @@ bool Tuile::verif_revendiquable(NumJoueur num_joueur) const{
             joueur1 = Combinaison::somme;
         if (cartes_posees[(int) autre_joueur].size() != nb_pleine){
             // TODO, verifier si l'on peut revendiquer une tuile non encore remplie (pour l'instant on considère que non)
+            // on utilisera pour cela le tableau des cartes déjà jouées.
             return false;
         }
         else{
@@ -289,8 +292,10 @@ void PremiereNormale::jouerTour()
     unsigned int carte_a_jouer = (unsigned int) movement[pos_carte+6] - 1;
     size_t pos_borne = movement.find("Borne:");
     unsigned int borne_sur_laquelle_jouer = (unsigned int) movement[pos_carte+6] - 1;
-    agent.jouerCarte(frontiere, carte_a_jouer, borne_sur_laquelle_jouer, (NumJoueur) agentActive);
-
+    Force force;
+    Couleur couleur;
+    agent.jouerCarte(frontiere, carte_a_jouer, borne_sur_laquelle_jouer, (NumJoueur) agentActive, force, couleur);
+    tableauJouee[(int) force][(int) couleur] = true;
     // Revendiquer les bornes
     size_t pos_nb_revendiquer = movement.find("nb:");
     unsigned int nb_bornes_a_revendiquer = (unsigned int) movement[pos_nb_revendiquer];
@@ -304,6 +309,8 @@ void PremiereNormale::jouerTour()
     CarteNormale* carte;
     if(piocheNormale.piocher(carte))
         agent.piocher(*carte);
+    else
+        throw PartieException("la pioche est vide, on ne peut pas piocher");
     agentSuivant();
 }
 
@@ -321,6 +328,9 @@ void PremiereNormale::initierMains()
             CarteNormale* carte;
             if(piocheNormale.piocher(carte))
                 agent.piocher(*carte);
+
+            else
+                throw PartieException("la pioche est vide, on ne peut pas piocher");
         }
 }
 
@@ -335,8 +345,9 @@ void Partie::commencer(Ordre ordre) {
     // TODO
 }
 
+
 void Partie::jouerTour() {
-    // TODO
+    // TODO cout <<" test";
 }
 
 unsigned int Frontiere::calculerScore(NumJoueur joueur_num) const{

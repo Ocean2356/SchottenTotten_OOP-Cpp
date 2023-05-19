@@ -1,6 +1,6 @@
 #include "partie.h"
 #include "schotten_totten.h"
-// ATTENTION, FAIRE LES DESTRUCTEURS !!
+
 
 
 int main(){
@@ -14,7 +14,36 @@ int main(){
                 << " Force = "<<toString( cartes[i * 6 + j]->getForce())<<"\n";
         }
     */
-    //Jeu j;
-    // j.commencerJeu(6);
+    Jeu j;
+    j.commencer_jeu(6);
+    bool continuer = true;
+    while (continuer){
+        Edition edition = choixEdition();
+        Variante variante = choixVariante();
+
+        j.jouerPartie(edition, variante);
+
+        string choix;
+        do{
+            cout << "Jouer une autre partie ? (Oui/Non)";
+            cin >> choix;
+            for (size_t i = 0; i < choix.length(); i++)
+                tolower(choix[i]);
+        }while (choix != "oui" && choix != "non");
+        continuer = choix == "oui";
+    }
+    cout << "Fin du jeu\n";
+    size_t joueur_gagnant = 0;
+    unsigned  int score_max = 0;
+    for (size_t i=0; i<j.getNbJoueurs(); i++){
+        unsigned int score = j.getScore(i);
+        cout << "Le joueur " << j.getNom(i) << "a obtenu " << score << "points.\n";
+        if (score_max < score) {
+            score_max = score;
+            joueur_gagnant = i;
+        }
+    }
+
+    cout << "Le joueur " << j.getNom(joueur_gagnant)  << "remporte la partie !\n";
     return 0;
 }

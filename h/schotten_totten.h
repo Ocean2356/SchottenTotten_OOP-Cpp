@@ -53,19 +53,21 @@ class Jeu
 {
 public:
     void commencer_jeu(size_t taille_main);
+    unsigned int getNbJoueurs() const { return joueurs.size();}
+    string getNom(size_t i) const { return joueurs[i].getNom();}
+    unsigned int getScore(size_t i) const { return joueurs[i].getScore();}
     Ordre determinerOrdre();
     void traiterResultat(Ordre ordre, Resultat resultat);
     void jouerPartie(Edition edition, Variante variante);
     Jeu():joueurs{Joueur(6), Joueur(6)}{}  // reprendre, 6 doit être remplacé par la taille de la main
     ~Jeu() = default;
-    Joueurs joueurs;
-private:
-    // Joueur joueurA;
-    // Joueur joueurB;
 
+private:
+    Joueurs joueurs;
     EditionProducer editionProducer;
 };
 
-
+Edition choixEdition();
+Variante choixVariante();
 #endif
 
