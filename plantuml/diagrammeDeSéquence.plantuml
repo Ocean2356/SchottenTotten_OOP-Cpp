@@ -1,0 +1,38 @@
+@startuml diagramme de séquence
+actor Joueur
+
+Joueur -> Main: piocherCartes()
+Joueur -> PartieNormale: commencer()
+activate PartieNormale
+PartieNormale -> Main: getMain(Joueur)
+activate Main
+Main -> Joueur: getCartes()
+deactivate Main
+PartieNormale -> Joueur: afficherMain(Cartes)
+PartieNormale -> Joueur: choisirCarte()
+activate Joueur
+Joueur -> PartieNormale: jouerCarte(Carte)
+deactivate Joueur
+PartieNormale -> Pioche: piocherCarte()
+activate Pioche
+Pioche -> PartieNormale: getCarte()
+deactivate Pioche
+PartieNormale -> PartieNormale: ajouterCarteMain(Carte)
+PartieNormale -> Joueur: afficherMain(Cartes)
+PartieNormale -> Joueur: choisirCarte()
+activate Joueur
+Joueur -> PartieNormale: jouerCarte(Carte)
+deactivate Joueur
+PartieNormale -> Tuile: revendiquerTuile(Carte)
+activate Tuile
+Tuile -> PartieNormale: estPartieTerminee()
+deactivate Tuile
+PartieNormale -> PartieNormale: testerFin()
+PartieNormale -> Joueur: afficherResultat(Resultat)
+PartieNormale -> Joueur: afficherMessage(Message)
+PartieNormale -> Joueur: rejouer()
+activate Joueur
+Joueur -> PartieNormale: commencer()
+deactivate Joueur
+deactivate PartieNormale
+@enduml
