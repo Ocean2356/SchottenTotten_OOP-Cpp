@@ -51,7 +51,6 @@ std::ostream& operator<<(std::ostream& f, const CarteNormale& c){ // REVOIR POUR
     return f;
 }
 
-
 PremiereNormale::PremiereNormale()
 {
     initierPiocheNormale();
@@ -59,7 +58,6 @@ PremiereNormale::PremiereNormale()
         for (size_t j = 0; i< NCOULEUR; i++)
             tableauJouee[i][j] = false;
     }
-
 }
 
 void PremiereNormale::initierAgents(Ordre ordre){
@@ -130,8 +128,6 @@ Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
                     cout << "La borne " << choix_borne_a_revendiquer << " ne peut pas etre revendiquee";
                     continuer = 0;
                 }
-
-
             }
             mvt.append("nb: %c", nb_bornes_a_revendiquer);
         }
@@ -300,6 +296,7 @@ JoueurGagnant Frontiere::estFinie() const{
 
 void PremiereNormale::jouerTour()
 {
+
     Agent& agent = agents[agentActive];
     Movement movement = agent.jouer(frontiere, (NumJoueur) agentActive);
 
@@ -351,7 +348,6 @@ void PremiereNormale::initierMains()
             CarteNormale carte;
             if(piocheNormale.piocher(carte))
                 agent.piocher(carte);
-
             else
                 throw PartieException("la pioche est vide, on ne peut pas piocher");
         }
@@ -362,7 +358,6 @@ void PremiereNormale::agentSuivant()
     agentActive++;
     agentActive %= 2;
 }
-
 
 unsigned int Frontiere::calculerScore(NumJoueur joueur_num) const{
     unsigned int score = 0;

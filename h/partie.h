@@ -68,7 +68,6 @@ public:
     CarteNormale()=default;
     Couleur getCouleur() const {return couleur;}
     Force getForce() const {return force;}
-
 private:
     Couleur couleur;
     Force force;
@@ -111,7 +110,7 @@ public:
             delete cartes[i];
         }
     }
-    Carte& operator[](size_t i) const { return *cartes[i]; }
+    Carte& operator[](size_t i) const { return *cartes[i]; }  
 private:
     array<Carte*, N> cartes;
     size_t nbCartes = 0;
@@ -199,7 +198,6 @@ public:
     const Carte& getCarte(size_t i) const{ return *cartes[i]; }
     const Carte& jouerCarte(size_t i){ cartes.erase(cartes.begin() + i); nbCartes--; return *cartes[i]; }
     void piocherCarte(const Carte& carte){ cartes.push_back(&carte);  nbCartes++;}
-
 private:
     vector<const Carte*> cartes;
     size_t taille_max;
@@ -290,6 +288,7 @@ private:
     TableauJouee tableauJouee;
 
     Pioche<CarteNormale, NCARTENORMALE> piocheNormale;
+    
     void initierPiocheNormale();
     void initierMains();
     void initierAgents(Ordre ordre);
