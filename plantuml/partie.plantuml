@@ -1,0 +1,90 @@
+@startuml SchottenTotten
+
+abstract Partie {
+    ' édition : texte 
+    revendiquerAutomatique : bool 
+    commencer()
+    jouerTour()
+    testerFin() : bool
+    terminer() : Resultat
+}
+
+class Carte {
+    info : string 
+    description : string
+}
+
+class CarteNormale {
+    couleur : Couleur
+    force : int 
+}
+
+enum Couleur {
+    rouge
+    bleu
+    vert
+    jaune
+    violet
+    marron
+}
+
+enum Force {
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+}
+
+class CarteTactique {
+    appliquer(Partie)
+}
+
+class Main {
+    piocher(Carte)
+    jouer(Carte)
+}
+
+class Pioche {
+    piocher() : bool, Carte
+    placerDessous(Carte)
+    estVide() : bool
+    getNbCartes() : int
+}
+
+class Tuile {
+    estPleine() : bool
+    estRevendiquée() : bool
+    revendiquer()
+    comparer() : int
+}
+
+class Frontiere {
+    estFinie() : bool
+    gagnant() : Joueur
+}
+
+class Agent {
+    jouer(Frontiere) : Movement
+}
+
+Carte <|-- CarteNormale
+Carte <|-- CarteTactique
+Main o-- "6" Carte
+Pioche o-- "n" Carte
+Tuile o-- “0…6” Carte
+Frontiere *-- “9” Tuile
+
+' Agent -- Frontiere : observer >
+' Agent -- Main : observer >
+
+' Agent -- Carte : jouer >
+' Agent -- Tuile : jouer >
+
+' Main -- Pioche : piocher >
+
+@enduml
