@@ -32,6 +32,10 @@ string toString(Force f){
     }
 }
 
+string Carte::getInfo() const{
+    return "TODO";
+}
+
 string Carte::getDescription() const{
     return "TODO";
 }
@@ -42,6 +46,10 @@ std::ostream& operator<<(std::ostream& f, const Carte& c){ // REVOIR POUR CARTE
     return f;
 }
 
+std::ostream& operator<<(std::ostream& f, const CarteNormale& c){ // REVOIR POUR CARTE
+    f<<toString(c.getCouleur())<<"|"<<toString(c.getForce());
+    return f;
+}
 
 PremiereNormale::PremiereNormale()
 {
@@ -60,17 +68,18 @@ void PremiereNormale::initierAgents(Ordre ordre){
 
 void PremiereNormale::commencer(Ordre ordre)
 {
-    initierMains();
     initierAgents(ordre);
+    initierMains();
 }
 
 Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
     Movement mvt;
+    f.afficherFrontiere();
     cout << "Choisissez votre action\n";
     if (main.getNbCartes() > 0){
-        cout << "Choix de la carte à jouer\n";
+        cout << "Choix de la carte a jouer\n";
         for (size_t i=0; i<main.getNbCartes(); i++)
-            cout << "Entrez " << i+1 << "pour jouer la carte " <<main.getCarte(i) <<"\n";
+            cout << "Entrez " << i+1 << " pour jouer la carte " <<main.getCarte(i) <<"\n";
         unsigned int choix_carte = -1;
         while (choix_carte < 1 || choix_carte > main.getNbCartes()){
             cout << "Votre Choix : ";
@@ -83,7 +92,7 @@ Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
         for (size_t i=0; i<f.getNbTuile(); i++){
             cpt ++;
             if (!f.tuiles[i].cote_plein(joueur_num) && !f.tuiles[i].estRevendiquee()) {
-                cout << "Entrez " << cpt << "pour jouer sur la borne numéro " << i + 1 << "\n";
+                cout << "Entrez " << cpt << " pour jouer sur la borne numero " << i + 1 << "\n";
             }
         }
 
@@ -107,7 +116,7 @@ Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
             while (continuer != 0) {
                 unsigned int choix_borne_a_revendiquer = 0;
                 while (choix_borne_a_revendiquer < 1 || choix_borne_a_revendiquer > f.getNbTuile()) {
-                    cout << "Entrez le numéro de la borne à revendiquer  (entre 1 et " << f.getNbTuile() << " : ";
+                    cout << "Entrez le numero de la borne a revendiquer  (entre 1 et " << f.getNbTuile() << " : ";
                     cin >> choix_borne_a_revendiquer;
                 }
                 if (f.tuiles[choix_borne_a_revendiquer].verif_revendiquable(joueur_num)) {
@@ -115,8 +124,10 @@ Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
                     nb_bornes_a_revendiquer ++;
                     cout << "Revendiquer une autre borne ? (entrez 0 si non, un autre entier si oui) :";
                     cin >> continuer;
-                } else
-                    cout << "La borne " << choix_borne_a_revendiquer << "ne peut pas être revendiquée";
+                } else{
+                    cout << "La borne " << choix_borne_a_revendiquer << " ne peut pas etre revendiquee";
+                    continuer = 0;
+                }
             }
             mvt.append("nb: %c", nb_bornes_a_revendiquer);
         }
@@ -129,6 +140,7 @@ void Agent::piocher(const Carte &carte){
     if (main.getTailleMax() == main.getNbCartes())
         throw PartieException("La main est pleine");
     main.piocherCarte(carte);
+    // cout << main.getCarte(main.getNbCartes() - 1);
 }
 
 unsigned int Tuile::get_somme(NumJoueur num_joueur) const{
@@ -284,7 +296,8 @@ JoueurGagnant Frontiere::estFinie() const{
 
 void PremiereNormale::jouerTour()
 {
-    Agent &agent = agents[agentActive];
+
+    Agent& agent = agents[agentActive];
     Movement movement = agent.jouer(frontiere, (NumJoueur) agentActive);
 
     // Jouer la carte choisie
@@ -306,29 +319,35 @@ void PremiereNormale::jouerTour()
         agent.revendiquerBorne(frontiere, borne_a_revendiquer, (NumJoueur) agentActive);
     }
     // Piocher une nouvelle carte
-    CarteNormale* carte;
+    CarteNormale carte;
     if(piocheNormale.piocher(carte))
-        agent.piocher(*carte);
+        agent.piocher(carte);
     else
         throw PartieException("la pioche est vide, on ne peut pas piocher");
     agentSuivant();
 }
 
-void PremiereNormale::initierPiocheNormale()
-{
+void PremiereNormale::initierPiocheNormale() {
     for (int i = 0; i < NCOULEUR; ++i)
-        for (int j = 0; j < NFORCE; ++j)
-            piocheNormale[i * NCOULEUR + j] = new CarteNormale((Couleur)i, j + FORCEMIN);
+        for (int j = 0; j < NFORCE; ++j){
+            piocheNormale.setCarte(i * NFORCE + j, (Couleur) i, (Force) (j+FORCEMIN));
+            //cout << piocheNormale[i * NFORCE + j] << " position =" << i * NFORCE + j << "\n";
+        }
+    /*
+    for (int i = 0; i < NCOULEUR; ++i)
+        for (int j = 0; j < NFORCE; ++j){
+            cout << piocheNormale[i * NFORCE + j] << "\n";
+        }
+    */
 }
 
 void PremiereNormale::initierMains()
 {
     for (auto &agent : agents)
         for (int i = 0; i < NMAIN; ++i){
-            CarteNormale* carte;
+            CarteNormale carte;
             if(piocheNormale.piocher(carte))
-                agent.piocher(*carte);
-
+                agent.piocher(carte);
             else
                 throw PartieException("la pioche est vide, on ne peut pas piocher");
         }
@@ -338,16 +357,6 @@ void PremiereNormale::agentSuivant()
 {
     agentActive++;
     agentActive %= 2;
-}
-
-
-void Partie::commencer(Ordre ordre) {
-    // TODO
-}
-
-
-void Partie::jouerTour() {
-    // TODO cout <<" test";
 }
 
 unsigned int Frontiere::calculerScore(NumJoueur joueur_num) const{

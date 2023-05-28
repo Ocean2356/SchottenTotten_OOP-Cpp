@@ -77,12 +77,10 @@ Ordre Jeu::determinerOrdre(){
         cout<<"Votre choix : ";
         cin>>choix;
     }while (choix < 1 || choix >joueurs.size());
-
-    ordre[0] = &joueurs[choix];
+    ordre[0] = &joueurs[choix-1];
     for (size_t i=0; i<joueurs.size(); i++)
-        if (choix != i)
-            ordre[i+1] = &joueurs[i];
-
+        if (choix != i+1)
+            ordre[choix-1+i] = &joueurs[i];
     return ordre;
 }
 
@@ -94,6 +92,7 @@ void Jeu::jouerPartie(Edition edition, Variante variante)
     AbstractEdition* abstractEdition = editionProducer.getEdition(edition);
 
     Partie* partie = abstractEdition->getPartie(variante);
+  
     Ordre ordre = determinerOrdre();
 
     partie->commencer(ordre);

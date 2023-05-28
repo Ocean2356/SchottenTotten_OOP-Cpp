@@ -52,10 +52,10 @@ void printForces(std::ostream& f = cout);
 class Carte
 {
 public:
-    string getInfo() const;  // TODO
-    string getDescription() const;  // TODO
-    Force getForce() const { return Force::un;} // REPRENDRE
-    Couleur getCouleur() const { return Couleur::Vert;} // REPRENDRE
+    virtual string getInfo() const;
+    string getDescription() const; // TODO
+    virtual Force getForce() const { return Force::un;} // REPRENDRE
+    virtual Couleur getCouleur() const { return Couleur::Vert;} // REPRENDRE
 };
 
 std::ostream& operator<<(std::ostream& f, const Carte& c);
@@ -64,15 +64,15 @@ std::ostream& operator<<(std::ostream& f, const Carte& c);
 class CarteNormale : public Carte
 {
 public:
-    CarteNormale(Couleur _couleur, int _force) : couleur(_couleur), force((Force)_force) {};
-    CarteNormale() = default;
-    const Couleur& getCouleur() const {return couleur;}
-    const Force& getForce() const {return force;}
-
+    CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
+    CarteNormale()=default;
+    Couleur getCouleur() const {return couleur;}
+    Force getForce() const {return force;}
 private:
     Couleur couleur;
     Force force;
 };
+std::ostream& operator<<(std::ostream& f, const CarteNormale& c);
 
 template <class Carte, size_t N>
 class Pioche
@@ -80,38 +80,45 @@ class Pioche
 public:
     bool estVide() const { return nbCartes == 0; };
     size_t getNbCartes() const { return nbCartes; };
+    void setCarte(size_t n, const Couleur& c, const Force& f){
+        cartes[n] = new Carte(c, f);
+    }
+
+    void swapCartes(Carte& c1, Carte& c2){
+        Carte tmp = c1;
+        c1=c2;
+        c2=tmp;
+    }
 
     bool piocher(Carte& carte) {
         if (estVide())
             return false;
-        carte = getCarte();
-        // cout << carte;
+        carte = piocherCarte();
         return true;
     };
-    void placerDessous(Carte &carte){
+    void placerDessous(const Carte& carte){
         // A REPRENDRE, nécessaire pour implémenter la version tactique
         cartes[cartes.size()] = carte;
     };
     Pioche(): cartes(), nbCartes(N) {
-        for (size_t i=0; i<N;i++)
-            cartes[i] = new Carte();
+        for (size_t i =0; i<N; i++){
+            cartes[i] = new Carte;
+        }
     }
-    ~Pioche(){
-        for (size_t i=0; i<N; i++){
+    ~Pioche() {
+        for (size_t i =0; i<N; i++){
             delete cartes[i];
         }
     }
-    Carte& operator[](size_t i) const { return *cartes[i]; }
-
+    Carte& operator[](size_t i) const { return *cartes[i]; }  
 private:
     array<Carte*, N> cartes;
     size_t nbCartes = 0;
     // vector<Carte> cartesDessous; TODO pour la version tactique
-    Carte getCarte(){
+    const Carte& piocherCarte(){
         size_t x = rand()%nbCartes;
-        Carte c = *cartes[x];
-        cartes[x] = cartes[--nbCartes];  // déplacement de la dernière carte à l'emplacement de la carte piochée
-        return c;
+        swapCartes(*cartes[x], *cartes[--nbCartes]);
+        return *cartes[nbCartes];
     }
 };
 
@@ -138,6 +145,15 @@ public:
             return 1;
         return 0;
     }
+    void afficher() const{
+        for(auto it=cartes_posees[0].begin(); it != cartes_posees[0].end(); it++){
+            cout << *it;
+        }
+        cout << " //// ";
+        for(auto it=cartes_posees[1].begin(); it != cartes_posees[1].end(); it++){
+            cout << *it;
+        }
+    }
     bool verif_meme_couleur(NumJoueur num_joueur) const;
     bool verif_meme_force(NumJoueur num_joueur) const;
     bool verif_suite(NumJoueur num_joueur) const;
@@ -155,6 +171,14 @@ private:
 
 class Frontiere{
 public:
+    void afficherFrontiere() const{
+        cout << "\n----------------------Affichage de la frontiere---------------------------";
+        for (size_t i=0; i<nb_tuile; i++){
+            cout<< "\nBorne " << i+1 <<"\n";
+            tuiles[i].afficher();
+        }
+        cout << "\n";
+    }
     const unsigned int getNbTuile() const { return nb_tuile;};
     unsigned int calculerScore(NumJoueur joueur_num) const;
     JoueurGagnant estFinie() const;
@@ -167,14 +191,13 @@ private:
 class Main
 {
 public:
-    Main(size_t taille):cartes(taille), taille_max(taille){}
+    Main(size_t taille):cartes(), taille_max(taille){}
     bool estVide() const { return nbCartes == 0; }
     size_t getNbCartes() const { return nbCartes; }
     size_t getTailleMax() const { return taille_max; }
     const Carte& getCarte(size_t i) const{ return *cartes[i]; }
     const Carte& jouerCarte(size_t i){ cartes.erase(cartes.begin() + i); nbCartes--; return *cartes[i]; }
-    void piocherCarte(const Carte& carte){cartes.push_back(&carte); nbCartes++;}
-
+    void piocherCarte(const Carte& carte){ cartes.push_back(&carte);  nbCartes++;}
 private:
     vector<const Carte*> cartes;
     size_t taille_max;
@@ -198,7 +221,6 @@ public:
     }
     void piocher(const Carte &carte);
     Agent(size_t taille): main(Main(taille)) {}
-
 private:
     Main main;
 };
@@ -224,12 +246,12 @@ private:
 class Partie
 {
 public:
-    virtual void commencer(Ordre ordre);
-    virtual void jouerTour();
+    virtual void commencer(Ordre ordre)=0;
+    virtual void jouerTour()=0;
     virtual bool testerFin();
     Resultat terminer();
     Partie()=default;
-    ~Partie()=default;
+    virtual ~Partie()=default;
 protected:
     Frontiere frontiere;
 };
@@ -250,7 +272,7 @@ public:
     PremiereNormale();
     ~PremiereNormale(){
         for (size_t i=0; i<NCARTENORMALE; i++){
-            delete piocheNormale[i];
+            delete &piocheNormale[i];
         }
     }
     void commencer(Ordre ordre);
@@ -265,7 +287,8 @@ private:
     using TableauJouee = array<array<bool, NFORCE>, NCOULEUR>;
     TableauJouee tableauJouee;
 
-    Pioche<CarteNormale*, NCARTENORMALE> piocheNormale;
+    Pioche<CarteNormale, NCARTENORMALE> piocheNormale;
+    
     void initierPiocheNormale();
     void initierMains();
     void initierAgents(Ordre ordre);
