@@ -1,4 +1,4 @@
-#include "partie.h"
+#include "../h/partie.h"
 #include "algorithm"
 #include "cctype"
 

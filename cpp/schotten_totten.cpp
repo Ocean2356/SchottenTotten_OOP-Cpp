@@ -1,4 +1,4 @@
-#include "schotten_totten.h"
+#include "../h/schotten_totten.h"
 
 std::initializer_list<Edition> Editions = { Edition::Premiere, Edition::Deuxieme };
 std::initializer_list<Variante> Variantes = { Variante::Normale, Variante::Tactique, Variante::Experts };
