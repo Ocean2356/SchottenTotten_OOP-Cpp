@@ -53,9 +53,9 @@ class Carte
 {
 public:
     virtual string getInfo() const;
-    string getDescription() const; // TODO
-    virtual Force getForce() const { return Force::un;} // REPRENDRE
-    virtual Couleur getCouleur() const { return Couleur::Vert;} // REPRENDRE
+    virtual string getDescription() const; // TODO
+    virtual Force getForce() const = 0;
+    virtual Couleur getCouleur() const = 0;
 };
 
 std::ostream& operator<<(std::ostream& f, const Carte& c);
@@ -66,8 +66,8 @@ class CarteNormale : public Carte
 public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
     CarteNormale()=default;
-    Couleur getCouleur() const {return couleur;}
-    Force getForce() const {return force;}
+    Couleur getCouleur() const override {return couleur;}
+    Force getForce() const override {return force;}
 private:
     Couleur couleur;
     Force force;
@@ -90,11 +90,11 @@ public:
         c2=tmp;
     }
 
-    bool piocher(Carte& carte) {
+    const Carte& piocher() {
         if (estVide())
-            return false;
-        carte = piocherCarte();
-        return true;
+            throw PartieException("La pioche est vide");
+        const Carte& carte = piocherCarte();
+        return carte;
     };
     void placerDessous(const Carte& carte){
         // A REPRENDRE, nécessaire pour implémenter la version tactique
@@ -131,7 +131,7 @@ public:
     Tuile(): nb_pleine(3), revendiquee(TuileRevendiquee::non_revendiquee){}
     TuileRevendiquee getRevendiquee() const { return revendiquee;}
     void placerCarte(const Carte& c, NumJoueur joueur_num){
-        cartes_posees[(int) joueur_num].push_back(c);
+        cartes_posees[(int) joueur_num].push_back(&c);
         if (cote_plein(joueur_num))
             rempli_en_premier = joueur_num;
     }
@@ -147,11 +147,11 @@ public:
     }
     void afficher() const{
         for(auto it=cartes_posees[0].begin(); it != cartes_posees[0].end(); it++){
-            cout << *it;
+            cout << **it;
         }
         cout << " //// ";
         for(auto it=cartes_posees[1].begin(); it != cartes_posees[1].end(); it++){
-            cout << *it;
+            cout << **it;
         }
     }
     bool verif_meme_couleur(NumJoueur num_joueur) const;
@@ -162,7 +162,7 @@ public:
     void revendiquer(NumJoueur num_joueur);
     bool estRevendiquee() const;
 private:
-    array<vector<Carte>, 2> cartes_posees;
+    array<vector<const Carte*>, 2> cartes_posees;
     //CarteTactique carte_posee_centre;  // A implémenter pour la version tactique
     unsigned int nb_pleine;
     NumJoueur rempli_en_premier;
@@ -191,17 +191,27 @@ private:
 class Main
 {
 public:
-    Main(size_t taille):cartes(), taille_max(taille){}
+    Main(size_t taille):cartes(), taille_max(taille), nbCartes(0){}
     bool estVide() const { return nbCartes == 0; }
     size_t getNbCartes() const { return nbCartes; }
     size_t getTailleMax() const { return taille_max; }
     const Carte& getCarte(size_t i) const{ return *cartes[i]; }
-    const Carte& jouerCarte(size_t i){ cartes.erase(cartes.begin() + i); nbCartes--; return *cartes[i]; }
-    void piocherCarte(const Carte& carte){ cartes.push_back(&carte);  nbCartes++;}
+    const Carte& jouerCarte(unsigned int i){
+        const Carte& carte = *cartes[i];
+        cartes.erase(cartes.begin() + i);
+        // for (auto it : cartes) cout << *it;
+        nbCartes--;
+        return carte;
+    }
+    void piocherCarte(const Carte& carte){
+        cartes.push_back(&carte);
+        nbCartes++;
+    }
+
 private:
     vector<const Carte*> cartes;
     size_t taille_max;
-    size_t nbCartes = 0;
+    size_t nbCartes;
 };
 
 
@@ -209,8 +219,9 @@ private:
 class Agent
 {
 public:
-    Movement jouer(const Frontiere &frontiere, NumJoueur joueur_num);
-    void jouerCarte(Frontiere& frontiere, size_t pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul){
+    Movement choisirCarteAJouer(const Frontiere& frontiere, NumJoueur joueur_num);
+    Movement choisirBornesARevendiquer(const Frontiere& frontiere, NumJoueur joueur_num);
+    void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul){
         const Carte& c = main.jouerCarte(pos_carte);
         f = c.getForce();
         coul = c.getCouleur();
@@ -219,7 +230,7 @@ public:
     void revendiquerBorne(Frontiere& frontiere, unsigned int num_borne, NumJoueur joueur_num){
         frontiere.tuiles[num_borne].revendiquer(joueur_num);
     }
-    void piocher(const Carte &carte);
+    void piocher(const Carte& carte);
     Agent(size_t taille): main(Main(taille)) {}
 private:
     Main main;

@@ -72,7 +72,7 @@ void PremiereNormale::commencer(Ordre ordre)
     initierMains();
 }
 
-Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
+Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
     Movement mvt;
     f.afficherFrontiere();
     cout << "Choisissez votre action\n";
@@ -85,7 +85,9 @@ Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
             cout << "Votre Choix : ";
             cin >> choix_carte;
         }
-        mvt.append("Carte:%c; ", choix_carte);
+        -- choix_carte;
+        mvt += "Carte:";
+        mvt += (char) choix_carte;
 
         cout << "Vous pouvez jouer sur les bornes suivantes: \n";
         unsigned int cpt = 0;
@@ -101,26 +103,35 @@ Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
             cout << "Votre Choix : ";
             cin >> choix_borne;
         }
-
-        mvt.append("Borne:%c; ", choix_borne);
+        mvt += "Borne:";
+        mvt += (char) (choix_borne - 1);
     }
-    string choix_revendiquer="";
+    return mvt;
+}
+
+
+Movement Agent::choisirBornesARevendiquer(const Frontiere& f, NumJoueur joueur_num){
+    Movement mvt;
+    f.afficherFrontiere();
+
+    string choix_revendiquer;
+    unsigned int nb_bornes_a_revendiquer = 0;
     while (choix_revendiquer != "oui" && choix_revendiquer != "non") {
         cout << "souhaitez-vous revendiquer une borne ? (oui/non)\n";
         cin >> choix_revendiquer;
-        for (size_t i = 0; i < choix_revendiquer.length(); i++)
+        for (auto i : choix_revendiquer)
             tolower(choix_revendiquer[i]);
         if (choix_revendiquer == "oui") {
             int continuer = 1;
-            unsigned int nb_bornes_a_revendiquer = 0;
             while (continuer != 0) {
                 unsigned int choix_borne_a_revendiquer = 0;
                 while (choix_borne_a_revendiquer < 1 || choix_borne_a_revendiquer > f.getNbTuile()) {
-                    cout << "Entrez le numero de la borne a revendiquer  (entre 1 et " << f.getNbTuile() << " : ";
+                    cout << "Entrez le numero de la borne a revendiquer  (entre 1 et " << f.getNbTuile() << "): ";
                     cin >> choix_borne_a_revendiquer;
                 }
                 if (f.tuiles[choix_borne_a_revendiquer].verif_revendiquable(joueur_num)) {
-                    mvt.append("Revendiquer:%c; ", choix_borne_a_revendiquer);
+                    mvt += "Revendiquer:";
+                    mvt += (char) (choix_borne_a_revendiquer - 1);
                     nb_bornes_a_revendiquer ++;
                     cout << "Revendiquer une autre borne ? (entrez 0 si non, un autre entier si oui) :";
                     cin >> continuer;
@@ -129,41 +140,42 @@ Movement Agent::jouer(const Frontiere& f, NumJoueur joueur_num){
                     continuer = 0;
                 }
             }
-            mvt.append("nb: %c", nb_bornes_a_revendiquer);
+
         }
     }
+    mvt += "nb:";
+    mvt += (char) nb_bornes_a_revendiquer;
     return mvt;
-
 }
+
 
 void Agent::piocher(const Carte &carte){
     if (main.getTailleMax() == main.getNbCartes())
         throw PartieException("La main est pleine");
     main.piocherCarte(carte);
-    // cout << main.getCarte(main.getNbCartes() - 1);
 }
 
 unsigned int Tuile::get_somme(NumJoueur num_joueur) const{
     unsigned int somme = 0;
     for (size_t i=0; i<nb_pleine; i++){
-        somme += (unsigned int )cartes_posees[(int) num_joueur][i].getForce();
+        somme += (unsigned int )cartes_posees[(int) num_joueur][i]->getForce();
     }
     return somme;
 }
 
 bool Tuile::verif_meme_couleur(NumJoueur num_joueur) const{
-    Couleur coul = cartes_posees[(int) num_joueur][0].getCouleur();
+    Couleur coul = cartes_posees[(int) num_joueur][0]->getCouleur();
     for (size_t i=1; i<nb_pleine; i++){
-        if (cartes_posees[(int) num_joueur][i].getCouleur() != coul)
+        if (cartes_posees[(int) num_joueur][i]->getCouleur() != coul)
             return false;
     }
     return true;
 }
 
 bool Tuile::verif_meme_force(NumJoueur num_joueur) const{
-    Force force = cartes_posees[(int) num_joueur][0].getForce();
+    Force force = cartes_posees[(int) num_joueur][0]->getForce();
     for (size_t i=1; i<nb_pleine; i++){
-        if (cartes_posees[(int) num_joueur][i].getForce() != force)
+        if (cartes_posees[(int) num_joueur][i]->getForce() != force)
             return false;
     }
     return true;
@@ -173,7 +185,7 @@ bool Tuile::verif_meme_force(NumJoueur num_joueur) const{
 bool Tuile::verif_suite(NumJoueur num_joueur) const{
     vector <int> tableau_force;
     for (size_t i=0; i<nb_pleine; i++)
-        tableau_force[i] = (int) cartes_posees[(int) num_joueur][0].getForce();
+        tableau_force[i] = (int) cartes_posees[(int) num_joueur][0]->getForce();
     sort(tableau_force.begin(), tableau_force.end());
     for (size_t i=0; i<nb_pleine-1;i++)
         if (tableau_force[i] + 1 != tableau_force[i+1])
@@ -298,32 +310,33 @@ void PremiereNormale::jouerTour()
 {
 
     Agent& agent = agents[agentActive];
-    Movement movement = agent.jouer(frontiere, (NumJoueur) agentActive);
+    Movement carte_a_jouee = agent.choisirCarteAJouer(frontiere, (NumJoueur) agentActive);
 
     // Jouer la carte choisie
-    size_t pos_carte = movement.find("Carte:");
-    unsigned int carte_a_jouer = (unsigned int) movement[pos_carte+6] - 1;
-    size_t pos_borne = movement.find("Borne:");
-    unsigned int borne_sur_laquelle_jouer = (unsigned int) movement[pos_carte+6] - 1;
+    size_t pos_carte = carte_a_jouee.find("Carte:");
+    auto carte_a_jouer = (unsigned int) (unsigned char) carte_a_jouee[pos_carte+6];
+    size_t pos_borne = carte_a_jouee.find("Borne:");
+    auto borne_sur_laquelle_jouer = (unsigned int) (unsigned char) carte_a_jouee[pos_borne+6];
     Force force;
     Couleur couleur;
     agent.jouerCarte(frontiere, carte_a_jouer, borne_sur_laquelle_jouer, (NumJoueur) agentActive, force, couleur);
     tableauJouee[(int) force][(int) couleur] = true;
+
+    Movement bornes_a_revendiquer = agent.choisirBornesARevendiquer(frontiere, (NumJoueur) agentActive);
     // Revendiquer les bornes
-    size_t pos_nb_revendiquer = movement.find("nb:");
-    unsigned int nb_bornes_a_revendiquer = (unsigned int) movement[pos_nb_revendiquer];
+    unsigned int pos_nb_revendiquer = bornes_a_revendiquer.find("nb:");
+    auto nb_bornes_a_revendiquer = (unsigned int) (unsigned char) bornes_a_revendiquer[pos_nb_revendiquer + 3];
+    //cout << nb_bornes_a_revendiquer;
     size_t pos_recherche = 0;
     for (unsigned int i=0; i<nb_bornes_a_revendiquer; i++){
-        pos_recherche = movement.find("Revendiquer:", pos_recherche);
-        unsigned int borne_a_revendiquer = (unsigned int) movement[pos_recherche+13] - 1;
+        pos_recherche = bornes_a_revendiquer.find("Revendiquer:", pos_recherche);
+        auto borne_a_revendiquer = (unsigned int) (unsigned char) bornes_a_revendiquer[pos_recherche+12];
         agent.revendiquerBorne(frontiere, borne_a_revendiquer, (NumJoueur) agentActive);
     }
+
     // Piocher une nouvelle carte
-    CarteNormale carte;
-    if(piocheNormale.piocher(carte))
-        agent.piocher(carte);
-    else
-        throw PartieException("la pioche est vide, on ne peut pas piocher");
+    const CarteNormale& carte = piocheNormale.piocher();
+    agent.piocher(carte);
     agentSuivant();
 }
 
@@ -345,11 +358,8 @@ void PremiereNormale::initierMains()
 {
     for (auto &agent : agents)
         for (int i = 0; i < NMAIN; ++i){
-            CarteNormale carte;
-            if(piocheNormale.piocher(carte))
-                agent.piocher(carte);
-            else
-                throw PartieException("la pioche est vide, on ne peut pas piocher");
+            const CarteNormale& carte = piocheNormale.piocher();
+            agent.piocher(carte);
         }
 }
 
