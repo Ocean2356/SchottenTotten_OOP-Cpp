@@ -1,4 +1,4 @@
-#include "schotten_totten.h"
+#include "../h/schotten_totten.h"
 
 std::initializer_list<Edition> Editions = { Edition::Premiere, Edition::Deuxieme };
 std::initializer_list<Variante> Variantes = { Variante::Normale, Variante::Tactique, Variante::Experts };
@@ -77,12 +77,10 @@ Ordre Jeu::determinerOrdre(){
         cout<<"Votre choix : ";
         cin>>choix;
     }while (choix < 1 || choix >joueurs.size());
-
     ordre[0] = &joueurs[choix-1];
     for (size_t i=0; i<joueurs.size(); i++)
         if (choix != i+1)
             ordre[choix-1+i] = &joueurs[i];
-
     return ordre;
 }
 

@@ -1,5 +1,6 @@
-#include "partie.h"
-#include "schotten_totten.h"
+#include "../h/partie.h"
+#include "../h/schotten_totten.h"
+
 
 
 

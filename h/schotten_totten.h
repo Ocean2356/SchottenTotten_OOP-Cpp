@@ -3,7 +3,7 @@
 
 #include <string>
 #include <array>
-#include "partie.h"
+#include "../h/partie.h"
 
 
 using Joueurs = array<Joueur, 2>;
@@ -70,4 +70,3 @@ private:
 Edition choixEdition();
 Variante choixVariante();
 #endif
-

@@ -1,0 +1,70 @@
+@startuml partie 
+skinparam groupInheritance 2
+
+' namespace EditionPattern{
+'     class PartieEdition{
+'         getPartie() : Partie
+'     }
+'     PartieEdition - Partie : get >
+'     interface Partie {
+'         commencer()
+'         jouerTour()
+'         testerFin()
+'         terminer()
+'     }
+
+'     Partie <|-- Premiere
+'     Partie <|-- Deuxieme
+'     abstract Premiere
+'     abstract Deuxieme
+'     Premiere <|-- PremiereNormale 
+'     Premiere <|-- PremiereTactique
+'     Premiere <|-- PremiereExperts
+'     Deuxieme <|-- DeuxiemeNormale
+'     Deuxieme <|-- DeuxiemeTactique
+' }
+
+namespace AbstractEditionPattern{
+    class EditionProducer{
+        getEdition() : AbstractEdition
+    }
+
+    namespace Edition{
+        abstract AbstractEdition
+        class PremiereEdition
+        class DeuxiemeEdition
+
+        AbstractEditionPattern.EditionProducer - AbstractEdition : get >
+        AbstractEdition <|-- PremiereEdition
+        AbstractEdition <|-- DeuxiemeEdition
+
+        abstract AbstractEdition {
+            getPartie() : Partie {abstract}
+        }
+    }
+
+    namespace Variante{
+        abstract Partie {
+            commencer() {abstract}
+            jouerTour() {abstract}
+            testerFin() {abstract}
+            terminer() {abstract}
+        }
+
+        AbstractEditionPattern.Edition.AbstractEdition - Partie : get >
+        Partie <|-- Premiere
+        Partie <|-- Deuxieme
+        abstract Premiere
+        abstract Deuxieme
+        Premiere <|-- PremiereNormale 
+        Premiere <|-- PremiereTactique
+        Premiere <|-- PremiereExperts
+        Deuxieme <|-- DeuxiemeNormale
+        Deuxieme <|-- DeuxiemeTactique
+    }
+}
+
+
+AbstractEditionPattern.EditionProducer -[hidden] AbstractEditionPattern.Edition.PremiereEdition
+' EditionPattern.PremiereNormale --[hidden]-- AbstractEditionPattern.EditionProducer
+@enduml
