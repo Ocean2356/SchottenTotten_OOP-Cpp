@@ -6,6 +6,9 @@
 
 using namespace std;
 
+class Joueur;
+class Frontiere;
+
 using Ordre = array<Joueur*, 2>;
 using Resultat = array<size_t, 2>;
 using Mouvement = string;
@@ -27,7 +30,7 @@ class CarteNormale : public Carte
 {
 	public:
 		 CarteNormale(Couleur c, Force f) : couleur(c), force(f){}
-		 ~CarteNormale() : default;
+		 ~CarteNormale() = default;
 		 string getInfo() const;
 		 string getDescription() const;
 	private:
@@ -38,8 +41,8 @@ class CarteNormale : public Carte
 class Pioche
 {
 	public:
-		Pioche(Carte** _cartes, size_t nbCartes) : cartes(_cartes)
-		~Pioche() : default;
+		Pioche(Carte** _cartes, size_t nbCartes) : cartes(_cartes){};
+		~Pioche() = default;
 		bool piocher(Carte** carte);
 	private:
 		Carte** cartes;
@@ -52,7 +55,7 @@ class Main
 {
 	public:
 		Main(size_t taille) : taille_max(taille){}
-		~Main() : default;
+		~Main() = default;
 		void piocherCarte(Carte* c);
 		Carte* getCarte(size_t i);
 	private:
@@ -72,11 +75,24 @@ class Agent
 		Main* main;
 };
 
+class Joueur
+{
+    public:
+        Joueur(string _nom) : nom(_nom){}
+        ~Joueur() = default;
+        string getNom() const;
+        void setNom(string _nom);
+        Agent* getAgent() const;
+    private:
+        string nom;
+        Agent* agent;
+};
+
 class Tuile
 {
 	public:
 		Tuile(size_t n) : nb_pleine(n), revendiquee(TuileRevendiquee::non_revendiquee){}
-        ~Tuile() : default;
+        ~Tuile() = default;
         TuileRevendiquee getRevendiquee() {return revendiquee;}
         void placerCarte(Carte* c, NumJoueur joueur_num);
         bool cote_plein(NumJoueur j);
@@ -92,8 +108,8 @@ class Tuile
 
 class Frontiere{
     public:
-        Frontiere() : initierTuiles();
-        ~Frontiere() : default;
+        Frontiere();
+        ~Frontiere() = default;
         bool estFinie();
         void placerCarte(Carte* c, size_t i, NumJoueur joueur_num);
     private:
@@ -108,7 +124,7 @@ class Partie
         virtual void commencer(Ordre ordre) = 0;
         virtual void jouerTour() = 0;
         virtual void testerFin() = 0;
-        Resultat terminer() = 0;
+        virtual Resultat terminer() = 0;
 };
 
 class Premiere : public Partie{
@@ -122,8 +138,8 @@ class Premiere : public Partie{
 
 class PremiereNormale : public Premiere{
     public:
-        PremiereNormale() : initierCartes();
-        ~PremiereNormale() : supprimerCartes();
+        PremiereNormale();
+        ~PremiereNormale();
         void commencer(Ordre ordre);
         void jouerTour();
         void testerFin();
