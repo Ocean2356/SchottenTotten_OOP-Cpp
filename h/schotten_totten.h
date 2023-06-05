@@ -16,65 +16,56 @@ de parties.
 
 using Joueurs = array<Joueur, 2>;
 
-enum class Edition {
-    Premiere, Deuxieme
-};
-enum class Variante {
-    Normale, Tactique, Experts
-};
+enum class Edition{ Premiere, Deuxieme};
+enum class Variante{Normale, Tactique, Experts};
 
 extern std::initializer_list<Edition> Editions;
 extern std::initializer_list<Variante> Variantes;
 
 string toString(Edition e);
-
 string toString(Variante v);
 
 Edition choixEdition();  // saisie par l'utilisateur de l'édition du jeu
 Variante choixVariante();  // saisie par l'utilisateur de la variante du jeu
 
-class AbstractEdition {
+class AbstractEdition{
 public:
-    virtual Partie *getPartie(Variante variante) = 0;
+    virtual Partie* getPartie(Variante variante) = 0;
 };
 
-class PremiereFactory : public AbstractEdition {
-    Partie *getPartie(Variante variante) override;
+class PremiereFactory : public AbstractEdition{
+    Partie* getPartie(Variante variante) override;
 };
 
-class DeuxiemeFactory : public AbstractEdition {
-    Partie *getPartie(Variante variante) override;
+class DeuxiemeFactory : public AbstractEdition{
+    Partie* getPartie(Variante variante) override;
 };
 
-class EditionProducer {
+class EditionProducer{
 public:
     AbstractEdition *getEdition(Edition edition);
 };
 
-
-class Jeu {// la classe jeu permet de jouer une succession de parties (potentiellement de différentes éditions et variantes) de Schotten-Totten
+// la classe jeu permet de jouer une succession de parties (potentiellement de différentes éditions et variantes) de Schotten-Totten
+class Jeu{
 public:
     Jeu() = default;
-
     Jeu(const Jeu &j) = delete;
-
     Jeu &operator=(const Jeu &j) = delete;
-
-    unsigned int getNbJoueurs() const { return joueurs.size(); }
-
-    string getNom(size_t i) const { return joueurs[i].getNom(); }
-
-    unsigned int getScore(size_t i) const { return joueurs[i].getScore(); }
+    unsigned int getNbJoueurs() const{ return joueurs.size(); }
+    string getNom(size_t i) const{ return joueurs[i].getNom(); }
+    unsigned int getScore(size_t i) const{ return joueurs[i].getScore(); }
 
     void commencerJeu();  // permet de saisir les noms des joueurs
     Ordre determinerOrdre(); // permet de choisir l'ordre de jeu des joueurs pour une partie
     void jouerPartie(Edition edition, Variante variante);  // gestion d'une partie (initialisation, déroulement, fin)
-    void traiterResultat(Ordre ordre,
-                         Resultat resultat);  // affiche les points des joueurs et le joueur qui a remporté la partie
-    void
-    finirJeu() const;  // afficher les scores des joueurs et le joueur gagnant une fois toutes les parties disputées
-    ~Jeu() = default;
 
+    // affiche les points des joueurs et le joueur qui a remporté la partie
+    void traiterResultat(Ordre ordre,Resultat resultat);
+
+    // afficher les scores des joueurs et le joueur gagnant une fois toutes les parties disputées
+    void finirJeu() const;
+    ~Jeu() = default;
 private:
     Joueurs joueurs;  // array de deux joueurs
     EditionProducer editionProducer;  // utilisé pour le choix de l'édition et de la variante
