@@ -84,7 +84,7 @@ class Pioche final{  // classe Pioche représentant une des pioches du jeu
 public:
     Pioche(): cartes(), nbCartes(N) {}
     bool estVide() const { return nbCartes == 0; } // Méthode indiquant si la pioche est vide
-    size_t getNbCartes() const { return nbCartes; }  // TODO indiquer l'état de progression de la pioche avec cette méthode
+    size_t getNbCartes() const { return nbCartes; }
 
     void setCarte(size_t n, const Couleur& c, const Force& f){  // Méthode permettant d'allouer une nouvelle carte de la pioche
         cartes[n] = new Carte(c, f);
@@ -99,15 +99,18 @@ public:
     const Carte& piocher() {
         if (estVide())
             throw PartieException("La pioche est vide");
+        // Génération d'un nombre aléatoire entre 0 et nbCartes - 1 (pour piocher une des cartes piochable de la pioche)
         std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
-        std::uniform_int_distribution <int> distrib {0, nbCartes-1};
+        std::uniform_int_distribution <int> distrib {0, (int) nbCartes-1};
         size_t x = distrib(random_eng);
+
+        // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
         swapCartes(*cartes[x], *cartes[--nbCartes]);
-        return *cartes[nbCartes];
+        return *cartes[nbCartes];  // on retourne la carte que l'on vient de "supprimer"
     };
 
     void placerDessous(const Carte& carte){
-        // A REPRENDRE, nécessaire pour implémenter la version tactique
+        // A REPRENDRE, nécessaire pour implémenter la version tactique, utiliser l'attribut cartesDessous
         cartes[cartes.size()] = carte;
     };
 
@@ -117,12 +120,10 @@ public:
         }
     }
 private:
-    array<Carte*, N> cartes;
-    size_t nbCartes = 0;
+    array<Carte*, N> cartes;  // array de N cartes
+    size_t nbCartes;  // nombre de cartes piochables
     // vector<Carte> cartesDessous; TODO pour la version tactique
 };
-
-
 
 
 class Tuile

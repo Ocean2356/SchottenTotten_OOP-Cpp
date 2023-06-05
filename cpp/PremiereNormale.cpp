@@ -311,6 +311,7 @@ void PremiereNormale::jouerTour()
 {
 
     Agent& agent = agents[agentActive];
+    cout << "\nIl reste " << piocheNormale.getNbCartes() << " cartes dans la pioche.";
     Movement carte_a_jouee = agent.choisirCarteAJouer(frontiere, (NumJoueur) agentActive);
 
     // Jouer la carte choisie
