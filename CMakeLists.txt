@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.25)
 project("SchottenTotten")
 
 aux_source_directory(./cpp cpp_srcs)
