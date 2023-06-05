@@ -114,7 +114,7 @@ public:
             throw PartieException("La pioche est vide");
         // Génération d'un nombre aléatoire entre 0 et nbCartes - 1 (pour piocher une des cartes piochable de la pioche)
         std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
-        std::uniform_int_distribution<int> distrib{0, (int) nbCartes - 1};
+        std::uniform_int_distribution<int> distrib{0, (unsigned int) nbCartes - 1};
         size_t x = distrib(random_eng);
 
         // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable

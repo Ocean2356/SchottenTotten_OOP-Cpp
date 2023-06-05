@@ -8,7 +8,7 @@ Description : Fichier cpp permettant de jouer à Schotten-Totten utilisé dans l
 #include "../h/partie.h"
 #include "../h/schotten_totten.h"
 
-int main(){
+int main(){/*
     try{
         Jeu j;
         j.commencerJeu();  // choix des noms des joueurs
@@ -32,6 +32,10 @@ int main(){
 
     } catch (PartieException &e){
         cout << "Erreur : " << e.getInfo() << "\n";
-    }
+    }*/
+    std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<int> distrib{0, (unsigned int) 3};
+    size_t x = distrib(random_eng);
+    cout << x;
     return 0;
 }

@@ -295,7 +295,7 @@ Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
         vector <int> borne_jouable;
         for (size_t i = 0; i < f.getNbTuile(); i++){
             if (!f.tuiles[i].cotePlein(joueur_num) && !f.tuiles[i].estRevendiquee()){
-                borne_jouable.push_back((int) i);
+                borne_jouable.push_back((int) i+1);
                 cout << "Entrez " << i + 1 << " pour jouer sur la borne numero " << i + 1 << "\n";
             }
         }
@@ -303,18 +303,20 @@ Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
             // on ne peut jouer sur aucune borne (pourrait arriver en variante tactique)
             return "";
         unsigned int choix_borne = 0;
-        bool saisie_incorrecte = true;
-        while (saisie_incorrecte){
+        bool saisie_correcte = false;
+        while (!saisie_correcte){
             cout << "Votre Choix : ";
             cin >> recup_choix;
             if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9){
                 choix_borne = (unsigned int) (recup_choix[0] - '0');
                 for (auto& b : borne_jouable){
-                    if (b == choix_borne)
-                        saisie_incorrecte = false;
+                    if (b == choix_borne){
+                        saisie_correcte = true;
+                        break;
+                    }
                 }
             }
-            if (saisie_incorrecte)
+            if (!saisie_correcte)
                 cout << "Veuillez entrez un numero d'une borne sur laquelle vous pouvez jouer\n";
         }
         mvt += "Borne:";
@@ -350,25 +352,28 @@ Movement Agent::choisirBornesARevendiquer(Frontiere& f, NumJoueur joueur_num){
                 }
                 if (f.verifRevendiquable(choix_borne_a_revendiquer - 1, joueur_num)){
                     // Si la tuile est revendiquable par le joueur
-                    bool saisie_incorrecte = true;
-                    do{
+                    bool saisie_incorrecte = false;
+                    for (auto& b : bornes_a_revendiquer)
+                        if (b == choix_borne_a_revendiquer){
+                            saisie_incorrecte = true;
+                            cout << "Veuillez entrer un numero d'une AUTRE borne\n";
+                        }
+                    if (! saisie_incorrecte){
                         bornes_a_revendiquer.push_back(choix_borne_a_revendiquer);
                         mvt += "Revendiquer:";
                         mvt += (char) (choix_borne_a_revendiquer - 1);
                         nb_bornes_a_revendiquer++;
-                        cout << "Revendiquer une autre borne ? (entrez 0 si non, un autre entier si oui): ";
-                        cin >> recup_choix;
-                        if ((int) recup_choix[0] >= 1 && (int) recup_choix[0] <= 9)
-                            choix_borne_a_revendiquer = (int) recup_choix[0];
-                        else
-                            for (auto& b : bornes_a_revendiquer){
-                                if (b == choix_borne_a_revendiquer)
-                                    saisie_incorrecte = false;
+                        do{
+                            saisie_incorrecte = true;
+                            cout << "Revendiquer une autre borne ? (entrez 0 si non, un entier strictement positif si oui): ";
+                            cin >> recup_choix;
+                            if ((unsigned int) (recup_choix[0] - '0') >= 0 && (unsigned int) (recup_choix[0] - '0') <= 9){
+                                saisie_incorrecte = false;
+                                choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
+                                continuer = choix_borne_a_revendiquer != 0;
                             }
-                        if (saisie_incorrecte)
-                            cout << "Veuillez entrez un numéro d'une AUTRE borne à revendiquer\n";
-                        continuer = choix_borne_a_revendiquer == 0;
-                    }while (continuer && saisie_incorrecte);
+                        }while (continuer && saisie_incorrecte);
+                    }
                 } else{
                     // sinon, on considère que le joueur s'est trompé
                     // et qu'il n'essayera pas de revendiquer d'autres bornes pour ce tour
