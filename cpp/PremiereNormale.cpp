@@ -346,14 +346,7 @@ void PremiereNormale::initierPiocheNormale() {
     for (int i = 0; i < NCOULEUR; ++i)
         for (int j = 0; j < NFORCE; ++j){
             piocheNormale.setCarte(i * NFORCE + j, (Couleur) i, (Force) (j+FORCEMIN));
-            //cout << piocheNormale[i * NFORCE + j] << " position =" << i * NFORCE + j << "\n";
         }
-    /*
-    for (int i = 0; i < NCOULEUR; ++i)
-        for (int j = 0; j < NFORCE; ++j){
-            cout << piocheNormale[i * NFORCE + j] << "\n";
-        }
-    */
 }
 
 void PremiereNormale::initierMains()

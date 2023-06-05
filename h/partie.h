@@ -12,15 +12,15 @@ class Joueur;
 
 using namespace std;
 using Ordre = array<Joueur*, 2>; // ordre des joueurs qui jouent
-using Resultat = array<unsigned int, 2>; // score des joueurs
-using Movement = string; // "piocher" ou "jouer"
+using Resultat = array<unsigned int, 2>; // score des joueurs à la fin d'une partie
+using Movement = string; // string représentant une action à effectuer (jouer telle carte sur telle borne, revendiquer telle borne...)
 
-enum class TuileRevendiquee {non_revendiquee, revendiquee_joueur1, revendiquee_joueur2};
+enum class TuileRevendiquee {non_revendiquee, revendiquee_joueur1, revendiquee_joueur2};  // utilisé pour stocker, pour chaque tuile, si elle a été revendiquée et par quel joueur
 enum class NumJoueur {joueur1, joueur2};
 enum class JoueurGagnant {aucun, joueur1, joueur2};
-enum class Combinaison {somme, suite, couleur, brelan, suite_couleur};
+enum class Combinaison {somme, suite, couleur, brelan, suite_couleur};  // différentes combinaisons de cartes possibles
 
-class PartieException {
+class PartieException {  // class permettant de lever des exceptions pour les erreurs ayant lieu dans une partie
 public:
     PartieException(const string& i) :info(i) {}
     string getInfo() const { return info; }
@@ -50,8 +50,8 @@ extern std::initializer_list<Force> Forces;
 void printCouleurs(std::ostream& f = cout);
 void printForces(std::ostream& f = cout);
 
-class Carte
-{
+
+class Carte{ // classe abstraite Carte
 public:
     virtual string getInfo() const = 0;
     virtual string getDescription() const = 0;
@@ -59,19 +59,17 @@ public:
     virtual Couleur getCouleur() const = 0;
     virtual ~Carte() = default;
 };
+std::ostream& operator<<(std::ostream& f, const Carte& c);  // Affichage d'une carte sur un flux ostream
 
-std::ostream& operator<<(std::ostream& f, const Carte& c);
-
-
-class CarteNormale : public Carte
-{
+class CarteNormale final : public Carte{  // CarteNormale, classe héritant de la classe abstraite carte
 public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
     CarteNormale()=default;
-    virtual string getInfo() const override {
+    virtual string getInfo() const override {  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
         return toString(couleur) + toString(force) + ' ';
     }
-    virtual string getDescription() const override {
+    virtual string getDescription() const override {  // méthode utilisée pour informer l'utilisateur des effets d'une carte
+        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
         return "Clan : force = " + toString(force) + " Couleur = " + toString(couleur);
     }
     Couleur getCouleur() const override {return couleur;}
@@ -81,17 +79,18 @@ private:
     Force force;
 };
 
-template <class Carte, size_t N>
-class Pioche
-{
+template <class Carte, size_t N>  // La pioche peut être une pioche de cartes normales ou une pioche de cartes tactiques
+class Pioche final{  // classe Pioche représentant une des pioches du jeu
 public:
-    bool estVide() const { return nbCartes == 0; };
-    size_t getNbCartes() const { return nbCartes; };
-    void setCarte(size_t n, const Couleur& c, const Force& f){
+    Pioche(): cartes(), nbCartes(N) {}
+    bool estVide() const { return nbCartes == 0; } // Méthode indiquant si la pioche est vide
+    size_t getNbCartes() const { return nbCartes; }  // TODO indiquer l'état de progression de la pioche avec cette méthode
+
+    void setCarte(size_t n, const Couleur& c, const Force& f){  // Méthode permettant d'allouer une nouvelle carte de la pioche
         cartes[n] = new Carte(c, f);
     }
 
-    void swapCartes(Carte& c1, Carte& c2){
+    void swapCartes(Carte& c1, Carte& c2){  // Méthode permettant d'échanger deux cartes de la pioche
         Carte tmp = c1;
         c1=c2;
         c2=tmp;
@@ -100,35 +99,27 @@ public:
     const Carte& piocher() {
         if (estVide())
             throw PartieException("La pioche est vide");
-        const Carte& carte = piocherCarte();
-        return carte;
+        std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+        std::uniform_int_distribution <int> distrib {0, nbCartes-1};
+        size_t x = distrib(random_eng);
+        swapCartes(*cartes[x], *cartes[--nbCartes]);
+        return *cartes[nbCartes];
     };
+
     void placerDessous(const Carte& carte){
         // A REPRENDRE, nécessaire pour implémenter la version tactique
         cartes[cartes.size()] = carte;
     };
-    Pioche(): cartes(), nbCartes(N) {
-        for (size_t i =0; i<N; i++){
-            cartes[i] = new Carte;
-        }
-    }
-    ~Pioche() {
-        for (size_t i =0; i<N; i++){
+
+    ~Pioche(){  // destructeur qui désalloue les cartes de la pioche
+        for (size_t i = 0; i < N; i++){
             delete cartes[i];
         }
     }
-    Carte& operator[](size_t i) const { return *cartes[i]; }
 private:
     array<Carte*, N> cartes;
     size_t nbCartes = 0;
     // vector<Carte> cartesDessous; TODO pour la version tactique
-    const Carte& piocherCarte(){
-        std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
-        std::uniform_int_distribution <int> distrib {0, N-1};
-        size_t x = distrib(random_eng);
-        swapCartes(*cartes[x], *cartes[--nbCartes]);
-        return *cartes[nbCartes];
-    }
 };
 
 
@@ -306,11 +297,7 @@ class PremiereNormale : public Premiere
 {
 public:
     PremiereNormale();
-    ~PremiereNormale(){
-        for (size_t i=0; i<NCARTENORMALE; i++){
-            delete &piocheNormale[i];
-        }
-    }
+    ~PremiereNormale() = default;
     void commencer(Ordre ordre);
     void jouerTour();
 
