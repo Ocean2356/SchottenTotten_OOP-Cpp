@@ -50,7 +50,7 @@ void PremiereNormale::initierAgents(Ordre ordre){
     agentActive = 0;
 }
 
-void PremiereNormale::commencer(Ordre ordre)
+void Premiere::commencer(Ordre ordre)
 {
     initierAgents(ordre);
     initierMains();
@@ -262,10 +262,6 @@ void Tuile::revendiquer(NumJoueur num_joueur){
         revendiquee = TuileRevendiquee::revendiquee_joueur2;
 }
 
-bool Tuile::estRevendiquee() const{
-    return revendiquee == TuileRevendiquee::revendiquee_joueur1 || revendiquee == TuileRevendiquee::revendiquee_joueur2;
-}
-
 JoueurGagnant Frontiere::estFinie() const{
     unsigned int adjacent = 1;
     unsigned int joueur_preced = 0;
@@ -343,7 +339,7 @@ void PremiereNormale::jouerTour()
     agentSuivant();
 }
 
-void PremiereNormale::initierPiocheNormale() {
+void Premiere::initierPiocheNormale() {
     for (int i = 0; i < NCOULEUR; ++i)
         for (int j = 0; j < NFORCE; ++j){
             piocheNormale.setCarte(i * NFORCE + j, (Couleur) i, (Force) (j+FORCEMIN));
@@ -359,7 +355,7 @@ void PremiereNormale::initierMains()
         }
 }
 
-void PremiereNormale::agentSuivant()
+void Premiere::agentSuivant()
 {
     agentActive++;
     agentActive %= 2;

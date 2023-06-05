@@ -173,12 +173,12 @@ void Jeu::jouerPartie(Edition edition, Variante variante)
     while (!partie->testerFin())
         partie->jouerTour();
 
-    // affichage du résultat de la partie
+    // affichage du résultat de la partie et mise à jour des scores des joueurs
     traiterResultat(ordre, partie->terminer());
 }
 
 
-// Méthode permettant d'afficher les points des joueurs et le joueur qui a remporté la partie
+// Méthode permettant de mettre à jour et d'afficher les points des joueurs et le joueur qui a remporté la partie
 void Jeu::traiterResultat(Ordre ordre, Resultat resultat){
     size_t joueur_gagnant = 0;
     size_t max_points = resultat[0];
@@ -200,4 +200,22 @@ void Jeu::traiterResultat(Ordre ordre, Resultat resultat){
         cout << "Nouveau score du joueur " << ordre[joueur_gagnant]->getNom()
             << " = " << ordre[joueur_gagnant]->getScore() <<"\n";
     }
+}
+
+
+// Méthode permettant d'afficher les scores des joueurs et le joueur gagnant une fois toutes les parties disputées
+void Jeu::finirJeu() const{
+    cout << "Fin du jeu\n";
+    // Affichage des scores finaux et du joueur gagnant
+    size_t joueur_gagnant = 0;
+    unsigned int score_max = 0;
+    for (size_t i=0; i<getNbJoueurs(); i++){
+        unsigned int score = getScore(i);
+        cout << "Le joueur " << getNom(i) << "a obtenu " << score << "points.\n";
+        if (score_max < score) {
+            score_max = score;
+            joueur_gagnant = i;
+        }
+    }
+    cout << "Le joueur " << getNom(joueur_gagnant)  << "remporte le jeu !\n";
 }
