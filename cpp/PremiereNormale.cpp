@@ -1,6 +1,4 @@
 #include "../h/partie.h"
-#include "algorithm"
-#include "cctype"
 
 std::initializer_list<Couleur> Couleurs = { Couleur::Rouge, Couleur::Marron, Couleur::Jaune, Couleur::Vert, Couleur::Bleu, Couleur::Violet };
 std::initializer_list<Force> Forces = { Force::un, Force::deux, Force::trois, Force::quatre, Force::cinq, Force::six, Force::sept, Force::huit, Force::neuf };
@@ -110,7 +108,7 @@ Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
 }
 
 
-Movement Agent::choisirBornesARevendiquer(const Frontiere& f, NumJoueur joueur_num){
+Movement Agent::choisirBornesARevendiquer(Frontiere& f, NumJoueur joueur_num){
     Movement mvt;
     f.afficherFrontiere();
 
@@ -119,8 +117,9 @@ Movement Agent::choisirBornesARevendiquer(const Frontiere& f, NumJoueur joueur_n
     while (choix_revendiquer != "oui" && choix_revendiquer != "non") {
         cout << "souhaitez-vous revendiquer une borne ? (oui/non)\n";
         cin >> choix_revendiquer;
-        for (auto i : choix_revendiquer)
-            tolower(choix_revendiquer[i]);
+        size_t i = 0;
+        for (auto& c : choix_revendiquer)
+            choix_revendiquer[i++] = (char) tolower(c);
         if (choix_revendiquer == "oui") {
             int continuer = 1;
             while (continuer != 0) {
@@ -129,7 +128,7 @@ Movement Agent::choisirBornesARevendiquer(const Frontiere& f, NumJoueur joueur_n
                     cout << "Entrez le numero de la borne a revendiquer  (entre 1 et " << f.getNbTuile() << "): ";
                     cin >> choix_borne_a_revendiquer;
                 }
-                if (f.tuiles[choix_borne_a_revendiquer].verif_revendiquable(joueur_num)) {
+                if (f.tuiles[choix_borne_a_revendiquer - 1].verif_revendiquable(joueur_num)) {
                     mvt += "Revendiquer:";
                     mvt += (char) (choix_borne_a_revendiquer - 1);
                     nb_bornes_a_revendiquer ++;
@@ -182,22 +181,38 @@ bool Tuile::verif_meme_force(NumJoueur num_joueur) const{
 }
 
 
-bool Tuile::verif_suite(NumJoueur num_joueur) const{
-    vector <int> tableau_force;
-    for (size_t i=0; i<nb_pleine; i++)
-        tableau_force[i] = (int) cartes_posees[(int) num_joueur][0]->getForce();
-    sort(tableau_force.begin(), tableau_force.end());
+void Tuile::ordonnerCartes(NumJoueur num_joueur) {
+    bool modif;  // on arrête le parcours lorsque plus aucune modification n'a été effectuée
+    do{
+        modif = false;
+        for (size_t i = 0; i<nb_pleine-1; i++){
+            if (cartes_posees[(int) num_joueur][i]->getForce() > cartes_posees[(int) num_joueur][i+1]->getForce()){
+                auto tmp = cartes_posees[(int) num_joueur][i];
+                cartes_posees[(int) num_joueur][i] = cartes_posees[(int) num_joueur][i+1];
+                cartes_posees[(int) num_joueur][i+1] = tmp;
+                modif = true;
+            }
+        }
+    } while (modif);
+}
+
+
+bool Tuile::verif_suite(NumJoueur num_joueur){
+    cout << "Suite";
+    ordonnerCartes(num_joueur);
+    cout << "coucou";
     for (size_t i=0; i<nb_pleine-1;i++)
-        if (tableau_force[i] + 1 != tableau_force[i+1])
+        if ((unsigned int) cartes_posees[(int) num_joueur][i]->getForce() + 1 != (unsigned int) cartes_posees[(int) num_joueur][i+1]->getForce())
             return false; // deux forces qui ne se suivent pas
+    cout << "SuiteFin";
     return true;
 }
 
-bool Tuile::verif_revendiquable(NumJoueur num_joueur) const{
+bool Tuile::verif_revendiquable(NumJoueur num_joueur){
     if (estRevendiquee())
         return false;
-    NumJoueur autre_joueur = (NumJoueur) (((int) num_joueur + 1) % 2);
-    if (cartes_posees[(int) num_joueur].size() != nb_pleine)
+    auto autre_joueur = (NumJoueur) (((int) num_joueur + 1) % 2);
+    if (!cote_plein(num_joueur))
         return false;
     else{
         // Détermination de la combinaison du joueur qui souhaite revendiquer la tuile
@@ -219,6 +234,7 @@ bool Tuile::verif_revendiquable(NumJoueur num_joueur) const{
             return false;
         }
         else{
+            cout << "OK";
             // Détermination de la combinaison de l'autre joueur
             Combinaison joueur2;
             if (verif_meme_force(autre_joueur))
@@ -232,10 +248,10 @@ bool Tuile::verif_revendiquable(NumJoueur num_joueur) const{
                 joueur2 = Combinaison::suite;
             else
                 joueur2 = Combinaison::somme;
-
-            if (int(joueur1) > int (joueur2))  // le joueur qui souhaite revendiquer la tuile a la meilleure combinaison
+            cout << (int) joueur1 << (int) joueur2;
+            if ((int) joueur1 > (int) joueur2)  // le joueur qui souhaite revendiquer la tuile a la meilleure combinaison
                 return true;
-            else if (int(joueur1) == int (joueur2)){ // les deux joueurs ont la même combinaison
+            else if ((int) joueur1 == (int) joueur2){ // les deux joueurs ont la même combinaison
                 unsigned int somme1 = get_somme(num_joueur);
                 unsigned int somme2 = get_somme(autre_joueur);
                 if (somme1 > somme2)
@@ -331,6 +347,7 @@ void PremiereNormale::jouerTour()
     for (unsigned int i=0; i<nb_bornes_a_revendiquer; i++){
         pos_recherche = bornes_a_revendiquer.find("Revendiquer:", pos_recherche);
         auto borne_a_revendiquer = (unsigned int) (unsigned char) bornes_a_revendiquer[pos_recherche+12];
+        cout << borne_a_revendiquer;
         agent.revendiquerBorne(frontiere, borne_a_revendiquer, (NumJoueur) agentActive);
     }
 

@@ -5,6 +5,8 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <random>
+#include <chrono>
 
 class Joueur;
 
@@ -116,7 +118,9 @@ private:
     size_t nbCartes = 0;
     // vector<Carte> cartesDessous; TODO pour la version tactique
     const Carte& piocherCarte(){
-        size_t x = rand()%nbCartes;
+        std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+        std::uniform_int_distribution <int> distrib {0, N-1};
+        size_t x = distrib(random_eng);
         swapCartes(*cartes[x], *cartes[--nbCartes]);
         return *cartes[nbCartes];
     }
@@ -130,35 +134,33 @@ class Tuile
 public:
     Tuile(): nb_pleine(3), revendiquee(TuileRevendiquee::non_revendiquee){}
     TuileRevendiquee getRevendiquee() const { return revendiquee;}
+    void ordonnerCartes(NumJoueur num_joueur);
     void placerCarte(const Carte& c, NumJoueur joueur_num){
         cartes_posees[(int) joueur_num].push_back(&c);
         if (cote_plein(joueur_num))
             rempli_en_premier = joueur_num;
     }
-    bool cote_plein(NumJoueur joueur_num) const{
-        if (cartes_posees[(int) joueur_num].size() == nb_pleine)
-            return 1;
-        return 0;
-    }
-    bool est_pleine() const{
-        if (cartes_posees[0].size() == nb_pleine && cartes_posees[1].size() == nb_pleine)
-            return 1;
-        return 0;
-    }
+    bool cote_plein(NumJoueur joueur_num) const{ return cartes_posees[(int) joueur_num].size() == nb_pleine;}
+    bool est_pleine() const{ return cartes_posees[0].size() == nb_pleine && cartes_posees[1].size() == nb_pleine;}
     void afficher() const{
-        for(auto it=cartes_posees[0].begin(); it != cartes_posees[0].end(); it++){
-            cout << **it;
+        for(auto c : cartes_posees[0]){
+            cout << *c;
         }
-        cout << " //// ";
-        for(auto it=cartes_posees[1].begin(); it != cartes_posees[1].end(); it++){
-            cout << **it;
+        if (revendiquee == TuileRevendiquee::revendiquee_joueur1)
+            cout << " /R1/ ";
+        else if (revendiquee == TuileRevendiquee::revendiquee_joueur1)
+            cout << " /R2/ ";
+        else
+            cout << "////";
+        for(auto c : cartes_posees[1]){
+            cout << *c;
         }
     }
     bool verif_meme_couleur(NumJoueur num_joueur) const;
     bool verif_meme_force(NumJoueur num_joueur) const;
-    bool verif_suite(NumJoueur num_joueur) const;
+    bool verif_suite(NumJoueur num_joueur);
     unsigned int get_somme(NumJoueur num_joueur) const;
-    bool verif_revendiquable(NumJoueur num_joueur) const;
+    bool verif_revendiquable(NumJoueur num_joueur);
     void revendiquer(NumJoueur num_joueur);
     bool estRevendiquee() const;
 private:
@@ -220,7 +222,7 @@ class Agent
 {
 public:
     Movement choisirCarteAJouer(const Frontiere& frontiere, NumJoueur joueur_num);
-    Movement choisirBornesARevendiquer(const Frontiere& frontiere, NumJoueur joueur_num);
+    Movement choisirBornesARevendiquer(Frontiere& frontiere, NumJoueur joueur_num);
     void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul){
         const Carte& c = main.jouerCarte(pos_carte);
         f = c.getForce();
