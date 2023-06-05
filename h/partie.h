@@ -162,6 +162,8 @@ public:
 
     // Méthode permettant de placer une carte d'un côté de la tuile
     virtual void placerCarte(const Carte& c, NumJoueur joueur_num){
+        if (cotePlein(joueur_num))
+            throw PartieException("La tuile est deja pleine\n");
         cartes_posees[(int) joueur_num].push_back(&c);
         if (cotePlein(joueur_num) && !estPleine())
             // le joueur vient de remplir la tuile de son côté et elle n'est pas pleine du côté de son adversaire
@@ -322,6 +324,8 @@ public:
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
     void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
                     Couleur& coul){
+        if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
+            throw PartieException("La tuile est deja pleine\n");
         const Carte& c = main.jouerCarte(pos_carte);  // on récupère la carte à jouer
         f = c.getForce(); // f est utilisée pour mettre à jour le tableau des cartes jouées
         coul = c.getCouleur();  // coul est utilisée pour mettre à jour le tableau des cartes jouées

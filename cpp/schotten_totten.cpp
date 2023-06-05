@@ -50,9 +50,12 @@ Edition choixEdition(){
 
     // Choix de l'édition
     char choix = 'a';
+    string recup_choix;
     while (!(choix >= '1' && (unsigned int) (choix - '0') <= i)){
         cout << "Votre choix : ";
-        cin >> choix;
+        cin >> recup_choix;
+        if (recup_choix[0] >= '1' && (unsigned int) (recup_choix[0] - '0') <=  i)
+            choix = recup_choix[0];
         if (choix == '2'){  // test à retirer une fois la deuxième édition implémentée
             cout << "Deuxieme edition pas encore implementee, on ne peut jouer qu'a la premiere\n";
             return (Edition) 0;
@@ -71,9 +74,12 @@ Variante choixVariante(){
 
     // Choix de la variante
     char choix = 'a';
+    string recup_choix;
     while (!(choix >= '1' && (unsigned int) (choix - '0') <= i)){
         cout << "Votre choix : ";
-        cin >> choix;
+        cin >> recup_choix;
+        if (recup_choix[0] >= '1' && (unsigned int) (recup_choix[0] - '0') <= i)
+            choix = recup_choix[0];
     }
     return (Variante) ((unsigned int) (choix - '0') - 1);
 }
@@ -130,7 +136,7 @@ void Jeu::commencerJeu(){
         while (!test_nom){
             test_nom = true;
             cout << "Entrez le nom du joueur " << i + 1 << ": ";
-            cin >> nom;
+            getline(cin, nom);
             for (const auto &n: nom_preced)
                 if (n == nom){
                     cout << "Nom deja utilise\n";
@@ -153,9 +159,12 @@ Ordre Jeu::determinerOrdre(){
 
     // Choix de l'ordre de jeu des joueurs
     char choix = 'a';
+    string recup_choix;
     while (!(choix >= '1' && (unsigned int) (choix - '0') <= joueurs.size())){
         cout << "Votre choix : ";
-        cin >> choix;
+        cin >> recup_choix;
+        if (recup_choix[0] >= '1' && (unsigned int) (recup_choix[0] - '0') <= joueurs.size())
+            choix = recup_choix[0];
     }
     auto ordre_joueur = (unsigned int) (choix - '0');
     ordre[0] = &joueurs[ordre_joueur - 1];
