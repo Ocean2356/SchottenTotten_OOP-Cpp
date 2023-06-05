@@ -209,12 +209,12 @@ void Jeu::traiterResultat(Ordre ordre, Resultat resultat){
     }
 
     // Affichage des nouveaux scores des joueurs
-    cout << "Le joueur " << ordre[joueur_gagnant]->getNom() << "gagne la partie et remporte "
-         << resultat[joueur_gagnant] << "points !\n";
+    cout << "Le joueur " << ordre[joueur_gagnant]->getNom() << " gagne la partie et remporte "
+         << resultat[joueur_gagnant] << " points !\n";
     cout << "Affichage des scores :";
     for (size_t i = 0; i < resultat.size(); i++){
-        cout << "Nouveau score du joueur " << ordre[joueur_gagnant]->getNom()
-             << " = " << ordre[joueur_gagnant]->getScore() << "\n";
+        cout << "Nouveau score du joueur " << ordre[i]->getNom()
+             << " = " << ordre[i]->getScore() << "\n";
     }
 }
 
@@ -227,11 +227,11 @@ void Jeu::finirJeu() const{
     unsigned int score_max = 0;
     for (size_t i = 0; i < getNbJoueurs(); i++){
         unsigned int score = getScore(i);
-        cout << "Le joueur " << getNom(i) << "a obtenu " << score << "points.\n";
+        cout << "Le joueur " << getNom(i) << " a obtenu " << score << "points.\n";
         if (score_max < score){
             score_max = score;
             joueur_gagnant = i;
         }
     }
-    cout << "Le joueur " << getNom(joueur_gagnant) << "remporte le jeu !\n";
+    cout << "Le joueur " << getNom(joueur_gagnant) << " remporte le jeu !\n";
 }

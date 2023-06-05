@@ -411,9 +411,8 @@ void Premiere::initierPiocheNormale(){
     // on alloue une nouvelle carte pour chaque force et couleur (par appel de Pioche::setCarte)
     size_t pos = 0;
     for (auto& c: Couleurs)
-        for (auto& f: Forces){
+        for (auto& f: Forces)
             piocheNormale.setCarte(pos++, c, f);
-        }
 }
 
 // Constructeur de la classe PremiereNormale
