@@ -59,7 +59,6 @@ void PremiereNormale::commencer(Ordre ordre)
 Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
     Movement mvt;
     f.afficherFrontiere();
-    cout << "Choisissez votre action\n";
     if (main.getNbCartes() > 0){
         cout << "Choix de la carte a jouer\n";
         for (size_t i=0; i<main.getNbCartes(); i++)

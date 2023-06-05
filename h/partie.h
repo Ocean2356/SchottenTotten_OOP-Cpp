@@ -187,7 +187,7 @@ private:
 class Frontiere{
 public:
     void afficherFrontiere() const{
-        cout << "\n--------------------------------------------Affichage de la frontiere------------------------------------------------------------------------------------\n";
+        cout << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
         for (size_t i=0; i<nb_tuile; i++)
             tuiles[i].afficherCote(0);
 
