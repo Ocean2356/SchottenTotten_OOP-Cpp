@@ -69,7 +69,7 @@ public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
     CarteNormale()=default;
     virtual string getInfo() const override {
-        return toString(force) + "|" + toString(couleur);
+        return toString(couleur) + toString(force) + ' ';
     }
     virtual string getDescription() const override {
         return "Clan : force = " + toString(force) + " Couleur = " + toString(couleur);
@@ -142,30 +142,38 @@ public:
     void ordonnerCartes(NumJoueur num_joueur);
     void placerCarte(const Carte& c, NumJoueur joueur_num){
         cartes_posees[(int) joueur_num].push_back(&c);
-        if (cote_plein(joueur_num))
+        if (cotePlein(joueur_num))
             rempli_en_premier = joueur_num;
     }
-    bool cote_plein(NumJoueur joueur_num) const{ return cartes_posees[(int) joueur_num].size() == nb_pleine;}
-    bool est_pleine() const{ return cartes_posees[0].size() == nb_pleine && cartes_posees[1].size() == nb_pleine;}
-    void afficher() const{
-        for(auto c : cartes_posees[0]){
+    bool cotePlein(NumJoueur joueur_num) const{ return cartes_posees[(int) joueur_num].size() == nb_pleine;}
+    bool estPleine() const{ return cartes_posees[0].size() == nb_pleine && cartes_posees[1].size() == nb_pleine;}
+    void afficherCote(size_t cote) const{
+        size_t iter = 1;
+        for(auto c : cartes_posees[cote]){
             cout << *c;
+            iter ++;
         }
-        if (revendiquee == TuileRevendiquee::revendiquee_joueur1)
-            cout << " /R1/ ";
-        else if (revendiquee == TuileRevendiquee::revendiquee_joueur1)
-            cout << " /R2/ ";
-        else
-            cout << "////";
-        for(auto c : cartes_posees[1]){
-            cout << *c;
+        while (iter < 5){
+            cout << "    ";
+            iter ++;
         }
+        cout << "|";
     }
-    bool verif_meme_couleur(NumJoueur num_joueur) const;
-    bool verif_meme_force(NumJoueur num_joueur) const;
-    bool verif_suite(NumJoueur num_joueur);
-    unsigned int get_somme(NumJoueur num_joueur) const;
-    bool verif_revendiquable(NumJoueur num_joueur);
+    void afficherEtatBorne(size_t num_borne) const{
+        cout << "      ";
+        if (revendiquee == TuileRevendiquee::revendiquee_joueur1)
+            cout << "/R1/";
+        else if (revendiquee == TuileRevendiquee::revendiquee_joueur1)
+            cout << "/R2/";
+        else
+            cout << "/B" << num_borne << "/ ";
+        cout << "     |";
+    }
+    bool verifMemeCouleur(NumJoueur num_joueur) const;
+    bool verifMemeForce(NumJoueur num_joueur) const;
+    bool verifSuite(NumJoueur num_joueur);
+    unsigned int getSomme(NumJoueur num_joueur) const;
+    bool verifRevendiquable(NumJoueur num_joueur);
     void revendiquer(NumJoueur num_joueur);
     bool estRevendiquee() const;
 private:
@@ -179,12 +187,21 @@ private:
 class Frontiere{
 public:
     void afficherFrontiere() const{
-        cout << "\n----------------------Affichage de la frontiere---------------------------";
-        for (size_t i=0; i<nb_tuile; i++){
-            cout<< "\nBorne " << i+1 <<"\n";
-            tuiles[i].afficher();
-        }
+        cout << "\n--------------------------------------------Affichage de la frontiere------------------------------------------------------------------------------------\n";
+        for (size_t i=0; i<nb_tuile; i++)
+            tuiles[i].afficherCote(0);
+
         cout << "\n";
+
+        for (size_t i=0; i<nb_tuile; i++)
+            tuiles[i].afficherEtatBorne(i + 1);
+
+        cout << "\n";
+
+        for (size_t i=0; i<nb_tuile; i++)
+            tuiles[i].afficherCote(1);
+
+        cout << "\n---------------------------------------------------------------------------------------------------------------------------------------------------------\n";
     }
     const unsigned int getNbTuile() const { return nb_tuile;};
     unsigned int calculerScore(NumJoueur joueur_num) const;
