@@ -28,38 +28,45 @@ Edition choixEdition(){
         i++;
         cout<<"Entrez "<<i<<" pour jouer a l'edition "<<toString(e)<<"\n";
     }
-    unsigned int choix;
-    do{
-        cout<<"Votre choix: ";
-        cin>>choix;
-    }while(choix<1 || choix>i);
-    return (Edition) (choix - 1);
+    char choix='a';
+    while (!(choix >= '1' && (unsigned int) (choix - '0') <= i)) {
+        cout << "Votre choix : ";
+        cin >> choix;
+    }
+    return (Edition) ((unsigned int) (choix - '0') - 1);
 }
 
 Variante choixVariante(){
     cout<<"Choix de la variante: ";
     unsigned int i=0;
-    for (auto v : Variantes){
+    for (auto& v : Variantes){
         i++;
         cout<<"Entrez "<<i<<" pour jouer a la variante "<<toString(v)<<"\n";
     }
-    unsigned int choix;
-    do{
-        cout<<"Votre choix: ";
-        cin>>choix;
-    }while(choix<1 || choix>i);
-    return (Variante) (choix - 1);
+    char choix='a';
+    while (!(choix >= '1' && (unsigned int) (choix - '0') <= i)) {
+        cout << "Votre choix : ";
+        cin >> choix;
+    }
+    return (Variante) ((unsigned int) (choix - '0') - 1);
 }
 
 void Jeu::commencer_jeu(size_t taille_main) {
     array <string, 2> nom_preced;
     for (size_t i=0; i<joueurs.size();i++){
-        cout<<"Entrez le nom du joueur "<<i+1<<": ";
         string nom;
-        cin>>nom;
-        for (auto n: nom_preced)
-            if (n == nom)
-                cout << "Nom deja utilise\n";
+        bool test_nom = false;
+        while (!test_nom){
+            test_nom = true;
+            cout<<"Entrez le nom du joueur "<<i+1<<": ";
+            cin>>nom;
+            for (const auto& n: nom_preced)
+                if (n == nom){
+                    cout << "Nom deja utilise\n";
+                    test_nom = false;
+                    break;
+                }
+        }
         nom_preced[i] = nom;
         joueurs[i] = Joueur(nom, taille_main);
     }
@@ -72,15 +79,16 @@ Ordre Jeu::determinerOrdre(){
     for (size_t i=0; i<joueurs.size(); i++)
         cout << "Entrez " << i+1 << " pour que le joueur " << joueurs[i].getNom() << " commence\n";
 
-    int choix;
-    do{
-        cout<<"Votre choix : ";
-        cin>>choix;
-    }while (choix < 1 || choix >joueurs.size());
-    ordre[0] = &joueurs[choix-1];
+    char choix='a';
+    while (!(choix >= '1' && (unsigned int) (choix - '0') <= joueurs.size())) {
+        cout << "Votre choix : ";
+        cin >> choix;
+    }
+    auto ordre_joueur = (unsigned int) (choix - '0');
+    ordre[0] = &joueurs[ordre_joueur-1];
     for (size_t i=0; i<joueurs.size(); i++)
-        if (choix != i+1)
-            ordre[choix-1+i] = &joueurs[i];
+        if (ordre_joueur != i+1)
+            ordre[ordre_joueur-1+i] = &joueurs[i];
     return ordre;
 }
 
