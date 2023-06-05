@@ -10,7 +10,6 @@
 
 class Joueur;
 
-
 using namespace std;
 using Ordre = array<Joueur*, 2>; // ordre des joueurs qui jouent
 using Resultat = array<unsigned int, 2>; // score des joueurs
@@ -54,10 +53,11 @@ void printForces(std::ostream& f = cout);
 class Carte
 {
 public:
-    virtual string getInfo() const;
-    virtual string getDescription() const; // TODO
+    virtual string getInfo() const = 0;
+    virtual string getDescription() const = 0;
     virtual Force getForce() const = 0;
     virtual Couleur getCouleur() const = 0;
+    virtual ~Carte() = default;
 };
 
 std::ostream& operator<<(std::ostream& f, const Carte& c);
@@ -68,13 +68,18 @@ class CarteNormale : public Carte
 public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
     CarteNormale()=default;
+    virtual string getInfo() const override {
+        return toString(force) + "|" + toString(couleur);
+    }
+    virtual string getDescription() const override {
+        return "Clan : force = " + toString(force) + " Couleur = " + toString(couleur);
+    }
     Couleur getCouleur() const override {return couleur;}
     Force getForce() const override {return force;}
 private:
     Couleur couleur;
     Force force;
 };
-std::ostream& operator<<(std::ostream& f, const CarteNormale& c);
 
 template <class Carte, size_t N>
 class Pioche
@@ -193,7 +198,8 @@ private:
 class Main
 {
 public:
-    Main(size_t taille):cartes(), taille_max(taille), nbCartes(0){}
+    Main() = default;
+    Main(size_t t_max): taille_max(t_max) {}
     bool estVide() const { return nbCartes == 0; }
     size_t getNbCartes() const { return nbCartes; }
     size_t getTailleMax() const { return taille_max; }
@@ -209,11 +215,10 @@ public:
         cartes.push_back(&carte);
         nbCartes++;
     }
-
 private:
     vector<const Carte*> cartes;
-    size_t taille_max;
-    size_t nbCartes;
+    size_t taille_max = 6;  // par défaut, la main contient au maximum 6 cartes. Ce nombre est modifié pour la partie tactique
+    size_t nbCartes = 0;  // initialement, la main est vide
 };
 
 
@@ -233,7 +238,8 @@ public:
         frontiere.tuiles[num_borne].revendiquer(joueur_num);
     }
     void piocher(const Carte& carte);
-    Agent(size_t taille): main(Main(taille)) {}
+    Agent() = default;
+    Agent(size_t taille_main): main(Main(taille_main)) {}
 private:
     Main main;
 };
@@ -246,13 +252,13 @@ public:
     void setScore(unsigned int points) {score += points;}
     const string& getNom() const {return nom;}
     const Agent& getAgent() const {return agent;}
-    Joueur(size_t taille): score(0), agent(Agent(taille)) {}
-    Joueur(const string& n, size_t taille): nom(n), score(0), agent(Agent(taille)) {}
+    Joueur() = default;
+    Joueur(const string& n): nom(n), agent(Agent()) {}
     ~Joueur() = default;
 private:
     string nom;
-    unsigned int score;
-    // bool ia;  // à ajouter lorsque l'on implémentera la possibilité de jouer contre une ia
+    unsigned int score = 0;
+    // bool ia;  // TODO à ajouter lorsque l'on implémentera la possibilité de jouer contre une ia (modifier Jeu::commencer_jeu en conséquence, ainsi que toutes les fonctions qui demandent un choix au joueur
     Agent agent;
 };
 

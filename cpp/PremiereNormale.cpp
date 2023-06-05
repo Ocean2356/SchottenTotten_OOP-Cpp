@@ -30,22 +30,8 @@ string toString(Force f){
     }
 }
 
-string Carte::getInfo() const{
-    return "TODO";
-}
-
-string Carte::getDescription() const{
-    return "TODO";
-}
-
-
-std::ostream& operator<<(std::ostream& f, const Carte& c){ // REVOIR POUR CARTE
-    f<<toString(c.getCouleur())<<"|"<<toString(c.getForce());
-    return f;
-}
-
-std::ostream& operator<<(std::ostream& f, const CarteNormale& c){ // REVOIR POUR CARTE
-    f<<toString(c.getCouleur())<<"|"<<toString(c.getForce());
+std::ostream& operator<<(std::ostream& f, const Carte& c){
+    f<< c.getInfo();
     return f;
 }
 

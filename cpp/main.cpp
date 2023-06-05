@@ -1,42 +1,31 @@
 #include "../h/partie.h"
 #include "../h/schotten_totten.h"
 
-
-
-
 int main(){
-    /*
-    Pioche<CarteNormale*, 54> cartes;
-
-    for (int i = 0; i < 6; ++i)
-        for (int j = 0; j < 9; ++j){
-            cartes[i * 6 + j] = new CarteNormale((Couleur)i, j + 1);
-            cout<<"Couleur = "<<toString( cartes[i * 6 + j]->getCouleur())
-                << " Force = "<<toString( cartes[i * 6 + j]->getForce())<<"\n";
-        }
-    */
     try{
         Jeu j;
-        j.commencer_jeu(6);
+        j.commencerJeu();  // choix des noms des joueurs
         bool continuer = true;
-        while (continuer){
-            Edition edition = choixEdition();
-            Variante variante = choixVariante();
-
+        while (continuer){  // tant que le joueur souhaite faire une partie
+            Edition edition = choixEdition();  // choix de l'édition du jeu
+            Variante variante = choixVariante();  // choix de la variante du jeu
             j.jouerPartie(edition, variante);
 
-            string choix;
+            string choix;  // on demande à l'utilisateur s'il souhaite jouer une autre partie
             do{
-                cout << "Jouer une autre partie ? (Oui/Non)";
+                cout << "Jouer une autre partie ? (oui/non)";
                 cin >> choix;
-                for (size_t i = 0; i < choix.length(); i++)
-                    tolower(choix[i]);
+                size_t i = 0;
+                for (auto& c : choix)
+                    choix[i++] = (char) tolower(c);
             }while (choix != "oui" && choix != "non");
             continuer = choix == "oui";
         }
         cout << "Fin du jeu\n";
+
+        // Affichage des scores et du joueur gagnant
         size_t joueur_gagnant = 0;
-        unsigned  int score_max = 0;
+        unsigned int score_max = 0;
         for (size_t i=0; i<j.getNbJoueurs(); i++){
             unsigned int score = j.getScore(i);
             cout << "Le joueur " << j.getNom(i) << "a obtenu " << score << "points.\n";
@@ -45,8 +34,8 @@ int main(){
                 joueur_gagnant = i;
             }
         }
-
         cout << "Le joueur " << j.getNom(joueur_gagnant)  << "remporte la partie !\n";
+
     }catch(PartieException& e){
         cout << "Erreur : " << e.getInfo() << "\n";
     }
