@@ -126,7 +126,7 @@ unsigned int Tuile::getSomme(NumJoueur num_joueur) const{
 }
 
 // Méthode permettant de vérifier qu'un joueur peut revendiquer une tuile
-bool Tuile::verifRevendiquable(NumJoueur num_joueur){
+bool Tuile::verifRevendiquable(NumJoueur num_joueur) {
     // si la tuile est déjà revendiquée, elle n'est pas revendiquable
     if (estRevendiquee())
         return false;
@@ -134,70 +134,56 @@ bool Tuile::verifRevendiquable(NumJoueur num_joueur){
     // si le côté du joueur qui a demandé à revendiquer la borne n'est pas plein, il ne peut pas revendiquer la borne
     if (!cotePlein(num_joueur))
         return false;
-    else{
-        // Détermination de la combinaison du joueur qui souhaite revendiquer la tuile
-        Combinaison joueur1;
-        if (verifMemeCouleur(num_joueur))
-            if (verifSuite(num_joueur))
-                // meilleure combinaison possible (trois cartes de la même couleur qui se suivent
-                joueur1 = Combinaison::suite_couleur;
-            else
-                // trois cartes de la même couleur, troisième meilleure combinaison
-                joueur1 = Combinaison::couleur;
-        else if (verifMemeForce(num_joueur))
-            // trois cartes de la même force, deuxième meilleure combinaison
-            joueur1 = Combinaison::brelan;
-        else if (verifSuite(num_joueur))
-            // trois cartes qui se suivent, mais pas de la même couleur, quatrième meilleure combinaison
-            joueur1 = Combinaison::suite;
-        else
-            // moins bonne combinaison, la somme
-            joueur1 = Combinaison::somme;
 
-        // on récupère le numéro de l'autre joueur (celui qui n'a pas demandé à revendiquer la borne)
-        auto autre_joueur = (NumJoueur) (((int) num_joueur + 1) % 2);
-        if (cartes_posees[(int) autre_joueur].size() != nb_pleine){
-            // TODO, verifier si l'on peut revendiquer une tuile non encore remplie (pour l'instant on considère que non)
-            // on utilisera pour cela le tableau des cartes déjà jouées.
-            return false;
-        } else{
-            // Détermination de la combinaison de l'autre joueur
-            Combinaison joueur2;
-            if (verifMemeCouleur(autre_joueur))
-                if (verifSuite(autre_joueur))
-                    // meilleure combinaison possible (trois cartes de la même couleur qui se suivent
-                    joueur2 = Combinaison::suite_couleur;
-                else
-                    // trois cartes de la même couleur, troisième meilleure combinaison
-                    joueur2 = Combinaison::couleur;
-            else if (verifMemeForce(autre_joueur))
-                // trois cartes de la même force, deuxième meilleure combinaison
-                joueur2 = Combinaison::brelan;
-            else if (verifSuite(autre_joueur))
-                // trois cartes qui se suivent, mais pas de la même couleur, quatrième meilleure combinaison
-                joueur2 = Combinaison::suite;
-            else
-                // moins bonne combinaison, la somme
-                joueur2 = Combinaison::somme;
+    // Détermination de la combinaison du joueur qui souhaite revendiquer la tuile
+    Combinaison joueur1 = determinerCombinaison(num_joueur);
 
-            if ((int) joueur1 >  (int) joueur2)
-                // le joueur qui souhaite revendiquer la tuile a la meilleure combinaison
+    // on récupère le numéro de l'autre joueur (celui qui n'a pas demandé à revendiquer la borne)
+    auto autre_joueur = (NumJoueur) (((int) num_joueur + 1) % 2);
+    if (cartes_posees[(int) autre_joueur].size() != nb_pleine) {
+        // TODO, verifier si l'on peut revendiquer une tuile non encore remplie (pour l'instant on considère que non)
+        // on utilisera pour cela le tableau des cartes déjà jouées.
+        return false;
+    } else{
+        // Détermination de la combinaison de l'autre joueur
+        Combinaison joueur2 = determinerCombinaison(autre_joueur);
+
+        if ((int) joueur1 > (int) joueur2)
+            // le joueur qui souhaite revendiquer la tuile a la meilleure combinaison
+            return true;
+        else if ((int) joueur1 == (int) joueur2) { // les deux joueurs ont la même combinaison
+            unsigned int somme1 = getSomme(num_joueur);
+            unsigned int somme2 = getSomme(autre_joueur);
+            if (somme1 > somme2)
+                // le joueur qui souhaite revendiquer la tuile peut le faire
                 return true;
-            else if ((int) joueur1 == (int) joueur2){ // les deux joueurs ont la même combinaison
-                unsigned int somme1 = getSomme(num_joueur);
-                unsigned int somme2 = getSomme(autre_joueur);
-                if (somme1 > somme2)
-                    // le joueur qui souhaite revendiquer la tuile peut le faire
-                    return true;
-                else if (somme1 == somme2)  // le joueur qui a rempli la tuile en premier peut la revendiquer
-                    return rempli_en_premier == num_joueur;
-                else
-                    // le joueur qui souhaite revendiquer la tuile ne peut pas le faire
-                    return false;
-            } else  // l'autre joueur a la meilleure combinaison
+            else if (somme1 == somme2)  // le joueur qui a rempli la tuile en premier peut la revendiquer
+                return rempli_en_premier == num_joueur;
+            else
+                // le joueur qui souhaite revendiquer la tuile ne peut pas le faire
                 return false;
-        }
+        } else  // l'autre joueur a la meilleure combinaison
+            return false;
     }
+}
+
+Combinaison Tuile::determinerCombinaison(NumJoueur num_joueur){
+    if (verifMemeCouleur(num_joueur))
+        if (verifSuite(num_joueur))
+            // meilleure combinaison possible (trois cartes de la même couleur qui se suivent
+            return Combinaison::suite_couleur;
+        else
+            // trois cartes de la même couleur, troisième meilleure combinaison
+            return Combinaison::couleur;
+    else if (verifMemeForce(num_joueur))
+        // trois cartes de la même force, deuxième meilleure combinaison
+        return Combinaison::brelan;
+    else if (verifSuite(num_joueur))
+        // trois cartes qui se suivent, mais pas de la même couleur, quatrième meilleure combinaison
+        return Combinaison::suite;
+    else
+        // moins bonne combinaison, la somme
+        return Combinaison::somme;
 }
 
 // Méthode permettant de revendiquer une tuile pour un joueur
@@ -295,7 +281,7 @@ Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
         while (choix_carte < 1 || choix_carte > main.getNbCartes()){
             cout << "Votre Choix : ";
             cin >> recup_choix;
-            if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9)
+            if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= main.getNbCartes())
                 choix_carte = (unsigned int) (recup_choix[0] - '0');
         }
         --choix_carte;
@@ -510,4 +496,44 @@ void PremiereNormale::initierMains(){
             agent.piocher(carte);
         }
 }
+//
+//void PremiereNormale::afficherFrontiere(const Frontiere& f) {
+//    size_t nb_tuile = f.nb_tuile;
+//    cout
+//            << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
+//    // Affichage des cartes des tuiles du côté du premier joueur
+//    for (size_t i = 0; i < nb_tuile; i++)
+//        f.tuiles[i].afficherCote(0);
+//    cout << "\n";
+//
+//    // Affichage de l'état des tuiles (le numéro du joueur qui l'a revendiquée ou le numéro de la tuile si elle n'est pas revendiquée)
+//    for (size_t i = 0; i < nb_tuile; i++)
+//        f.tuiles[i].afficherEtatBorne(i + 1);
+//    cout << "\n";
+//
+//    // Affichage des cartes des tuiles du côté du second joueur
+//    for (size_t i = 0; i < nb_tuile; i++)
+//        f.tuiles[i].afficherCote(1);
+//    cout
+//            << "\n---------------------------------------------------------------------------------------------------------------------------------------------------------\n";
+//}
 
+void Frontiere:: afficherFrontiere() const{
+    cout
+            << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
+    // Affichage des cartes des tuiles du côté du premier joueur
+    for (size_t i = 0; i < nb_tuile; i++)
+        tuiles[i].afficherCote(0);
+    cout << "\n";
+
+    // Affichage de l'état des tuiles (le numéro du joueur qui l'a revendiquée ou le numéro de la tuile si elle n'est pas revendiquée)
+    for (size_t i = 0; i < nb_tuile; i++)
+        tuiles[i].afficherEtatBorne(i + 1);
+    cout << "\n";
+
+    // Affichage des cartes des tuiles du côté du second joueur
+    for (size_t i = 0; i < nb_tuile; i++)
+        tuiles[i].afficherCote(1);
+    cout
+            << "\n---------------------------------------------------------------------------------------------------------------------------------------------------------\n";
+}

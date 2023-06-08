@@ -188,6 +188,8 @@ public:
     // permet de vérifier qu'un joueur peut revendiquer une tuile
     virtual bool verifRevendiquable(NumJoueur num_joueur);
 
+    virtual Combinaison determinerCombinaison(NumJoueur num_joueur);
+
     // revendique une tuile pour un joueur
     virtual void revendiquer(NumJoueur num_joueur);
 
@@ -392,6 +394,7 @@ public:
     // Méthode permettant de jouer un tour dans son intégralité (choix de la carte à jouer, revendiquer une ou plusieurs bornes, piocher)
     void jouerTour() override;
     ~PremiereNormale() = default;
+//    InterfaceST interfaceST;
 private:
     static const int NMAIN = 6;  // 6 cartes dans la main dans cette variante
     array<Agent, 2> agents{Agent(NMAIN), Agent(NMAIN)};  // tableau des agents de la partie
