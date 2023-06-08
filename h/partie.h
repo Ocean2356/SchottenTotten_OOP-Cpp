@@ -244,25 +244,7 @@ public:
     JoueurGagnant estFinie() const;
 
     // Méthode permettant d'afficher la frontière
-    void afficherFrontiere() const{
-        cout
-                << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
-        // Affichage des cartes des tuiles du côté du premier joueur
-        for (size_t i = 0; i < nb_tuile; i++)
-            tuiles[i].afficherCote(0);
-        cout << "\n";
-
-        // Affichage de l'état des tuiles (le numéro du joueur qui l'a revendiquée ou le numéro de la tuile si elle n'est pas revendiquée)
-        for (size_t i = 0; i < nb_tuile; i++)
-            tuiles[i].afficherEtatBorne(i + 1);
-        cout << "\n";
-
-        // Affichage des cartes des tuiles du côté du second joueur
-        for (size_t i = 0; i < nb_tuile; i++)
-            tuiles[i].afficherCote(1);
-        cout
-                << "\n---------------------------------------------------------------------------------------------------------------------------------------------------------\n";
-    }
+    void afficherFrontiere() const;
     ~Frontiere() = default;
 
 private:
@@ -322,15 +304,7 @@ public:
     Movement choisirCarteAJouer(const Frontiere& frontiere, NumJoueur joueur_num);
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-    void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
-                    Couleur& coul){
-        if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
-            throw PartieException("La tuile est deja pleine\n");
-        const Carte& c = main.jouerCarte(pos_carte);  // on récupère la carte à jouer
-        f = c.getForce(); // f est utilisée pour mettre à jour le tableau des cartes jouées
-        coul = c.getCouleur();  // coul est utilisée pour mettre à jour le tableau des cartes jouées
-        frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);  // on place la carte sur la frontière
-    }
+    void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
 
     // Méthode permettant la saisie par l'utilisateur d'une ou plusieurs bornes à revendiquer
     Movement choisirBornesARevendiquer(Frontiere& frontiere, NumJoueur joueur_num);

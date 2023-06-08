@@ -271,6 +271,17 @@ JoueurGagnant Frontiere::estFinie() const{
     return JoueurGagnant::aucun;
 }
 
+// Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
+void Agent:: jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
+                Couleur& coul){
+    if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
+        throw PartieException("La tuile est deja pleine\n");
+    const Carte& c = main.jouerCarte(pos_carte);  // on récupère la carte à jouer
+    f = c.getForce(); // f est utilisée pour mettre à jour le tableau des cartes jouées
+    coul = c.getCouleur();  // coul est utilisée pour mettre à jour le tableau des cartes jouées
+    frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);  // on place la carte sur la frontière
+}
+
 // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
 Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
     Movement mvt;  // string permettant d'indiquer les actions à effectuer
