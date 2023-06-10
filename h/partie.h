@@ -65,23 +65,24 @@ public:
 
 std::ostream& operator<<(std::ostream& f, const Carte& c);  // Affichage d'une carte sur un flux ostream
 
-class CarteNormale final : public Carte{  // CarteNormale, classe héritant de la classe abstraite carte
+class CarteNormale : public Carte{  // CarteNormale, classe héritant de la classe abstraite carte
 public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
     CarteNormale() = default;
     CarteNormale(const CarteNormale& c) = default;
     CarteNormale& operator=(const CarteNormale& c) = default;
-    virtual string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
+    string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
         return toString(couleur) + toString(force) + ' ';
     }
 
     // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    virtual string getDescription() const override{
+    string getDescription() const override{
         // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
         return "Clan : force = " + toString(force) + " Couleur = " + toString(couleur);
     }
     Couleur getCouleur() const override{ return couleur; }
     Force getForce() const override{ return force; }
+    virtual ~CarteNormale() = default;
 private:
     Couleur couleur;
     Force force;
@@ -315,13 +316,13 @@ public:
     void revendiquerBorne(Frontiere& frontiere, unsigned int num_borne, NumJoueur joueur_num){
         frontiere.tuiles[num_borne].revendiquer(joueur_num);
     }
-    ~Agent() = default;
+    virtual ~Agent() = default;
 private:
     Main main;  // un agent a une main
 };
 
 
-class Joueur{  // classe représentant un joueur du jeu
+class Joueur final{  // classe représentant un joueur du jeu
 public:
     Joueur() = default;
     Joueur(const string& n) : nom(n){}
@@ -352,7 +353,7 @@ public:
     virtual bool testerFin(){
         return frontiere.estFinie() != JoueurGagnant::aucun;
     }
-    Resultat terminer();  // Méthode permettant de calculer et de retourner le score des joueurs à la fin d'une partie
+    virtual Resultat terminer();  // Méthode permettant de calculer et de retourner le score des joueurs à la fin d'une partie
     virtual ~Partie() = default;
 protected:
     Frontiere frontiere;
@@ -376,6 +377,7 @@ public:
         agentActive %= 2;
     }
     void initierPiocheNormale();  // initialisation de la pioche normale
+    virtual ~Premiere() = default;
 protected:
     static const int NCOULEUR = 6;  // 6 couleurs pour la première édition
     static const int FORCEMIN = 1;

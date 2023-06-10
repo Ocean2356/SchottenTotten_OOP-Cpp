@@ -31,23 +31,24 @@ Variante choixVariante();  // saisie par l'utilisateur de la variante du jeu
 class AbstractEdition{
 public:
     virtual Partie* getPartie(Variante variante) = 0;
+    virtual ~AbstractEdition() = default;
 };
 
-class PremiereFactory : public AbstractEdition{
+class PremiereFactory final : public AbstractEdition{
     Partie* getPartie(Variante variante) override;
 };
 
-class DeuxiemeFactory : public AbstractEdition{
+class DeuxiemeFactory final : public AbstractEdition{
     Partie* getPartie(Variante variante) override;
 };
 
-class EditionProducer{
+class EditionProducer final{
 public:
     AbstractEdition *getEdition(Edition edition);
 };
 
 // la classe jeu permet de jouer une succession de parties (potentiellement de différentes éditions et variantes) de Schotten-Totten
-class Jeu{
+class Jeu final{
 public:
     Jeu() = default;
     Jeu(const Jeu &j) = delete;
