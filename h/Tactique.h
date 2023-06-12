@@ -55,9 +55,7 @@ public:
 
     CarteTroupe(const string& nom, Force force, Couleur couleur, Troupe t) : CarteNormale(couleur,force), CarteTactique(nom), troupe(t) {};
 
-
     Troupe getTroupe() const { return troupe; }
-
 
     CarteTroupe mettre_Joker();
     CarteTroupe mettre_PorteBouclier();
@@ -80,17 +78,19 @@ public:
     virtual void afficherEtatBorne(size_t num_borne) const {
         // Cette méthode est appelée par Frontiere::afficherFrontiere()
         cout << "      ";  // utilisé pour centrer l'affichage
-        if(centrePlein() != true && carte_posee_centre != nullptr)
-            (*carte_posee_centre).afficherCarte();
+        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_posee_centre);
+        if (carte_combat != nullptr) {
+            carte_combat->afficherCarte();
+        }
         cout << "     |";  // utilisé pour centrer l'affichage
     }
 
-    const CarteCombat* getCartePoseeCentre() const { return carte_posee_centre; }
+    const CarteTactique* getCartePoseeCentre() const { return carte_posee_centre; }
 
     // Méthode vérifiant si le centre de la tuile est plein
     bool centrePlein() const{ return (*carte_posee_centre).getNom() != ""; }
 
-    void placerCarteCentre(const CarteCombat* c){
+    void placerCarteCentre(const CarteTactique* c){
         if (centrePlein())
             throw PartieException("Le centre de la tuile est deja pleine\n");
         carte_posee_centre = c;
@@ -98,19 +98,23 @@ public:
     }
 
 private:
-    const CarteCombat* carte_posee_centre;  // A implémenter pour la version tactique
+    const CarteTactique* carte_posee_centre;  // A implémenter pour la version tactique
 };
-
 
 class CarteCombat : public CarteTactique {  // classe Combat, héritant de la classe CarteTactique
 public:
     CarteCombat(const string& nom) : CarteTactique(nom){};
 
     void mettre_ColinMaillard(Tuile_tactique* t) const {
-        t->placerCarteCentre(*this);
+        const CarteTactique* carte_tactique = dynamic_cast<const CarteTactique*>(this);
+        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_tactique);
+        t->placerCarteCentre(carte_combat);
     }
+
     void mettre_CombatdeBoue(Tuile_tactique* t) const {
-        t->placerCarteCentre(*this);
+        const CarteTactique* carte_tactique = dynamic_cast<const CarteTactique*>(this);
+        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_tactique);
+        t->placerCarteCentre(carte_combat);
     }
     void afficherCarte()const;
     void afficherDosCarte()const {
@@ -146,6 +150,8 @@ private:
     Ruse ruse;
     const string nom = toString(ruse);
 };
+
+
 
 class Defausse {
 public:
@@ -191,6 +197,13 @@ public:
 
 private:
     array<Carte*, 6> cartes;
+};
+
+class Affichage: public CarteTactique{ // classe Affichage, héritant de la classe CarteTactique
+public:
+    void demande_couleur(CarteTroupe& carte);
+    void demande_force(CarteTroupe& carte);
+private:
 };
 
 

@@ -62,14 +62,14 @@ void demande_couleur(CarteTroupe& carte){
     carte.setCouleur(static_cast<Couleur>(choix_couleur));
 }
 
-void demande_force(CarteTroupe& carte){
-    for (int i = 0; i < static_cast<int>(Force::neuf) + 1; i++) {
+void demande_force(CarteTroupe& carte, unsigned int max){
+    for (int i = 0; i < max  + 1; i++) {
         Force force = static_cast<Force>(i);
         std::cout << i << ": " << static_cast<int>(force) << std::endl;
     }
     int choix_force = -1;
-    while (choix_force < 0 || choix_force > 10) {
-        cout << "Veuillez choisir une force entre 1 et 9 :" << endl;
+    while (choix_force < 0 || choix_force > max) {
+        cout << "Veuillez choisir une force entre 1 et" << max-1 << ":" << endl;
         cin >> choix_force;
     }
     carte.setForce(static_cast<Force>(choix_force));
@@ -79,8 +79,8 @@ void demande_force(CarteTroupe& carte){
 CarteTroupe CarteTroupe::mettre_Joker() {
     cout << "Carte joker pose : " << endl;
     demande_couleur(*this);
-    demande_force(*this);
-    return new CarteTroupe("Joker", getForce(), getCouleur(), Troupe::Joker);
+    demande_force(*this, 10);
+    return CarteTroupe("Joker", getForce(), getCouleur(), Troupe::Joker);
 }
 
 //Carte clan de valeur 7 dont on choisit la couleur
@@ -94,13 +94,8 @@ CarteTroupe CarteTroupe::mettre_Espion() {
 //carte porte_bouclier permet de se transformer en une valeur de 1,2 ou 3 et de choisir n'importe quelle couleur
 CarteTroupe CarteTroupe::mettre_PorteBouclier() {
     cout << "Carte porte bouclier pose : " << endl;
-    demande_couleur();
-    int choix_force = -1;
-    while (choix_force < 0 || choix_force > 4) {
-        cout << "Veuillez choisir une force entre 1 et 3 :" << endl;
-        cin >> choix_force;
-    }
-    setForce(static_cast<Force>(choix_force));
+    demande_couleur(*this);
+    demande_force(*this,4);
     return *this;
 }
 
