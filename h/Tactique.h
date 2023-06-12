@@ -33,12 +33,19 @@ public:
     CarteTactique(const string& n) : nom(n){}
     CarteTactique() = default;
     bool estTactique() const override {return true;}
-    bool estNormale() const override {return false;}
     string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
 
+
     // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    virtual string getDescription() const = 0;
-    virtual ~CarteTactique() = default;
+    string getDescription() const override {
+        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
+        return "Tactique :  "  + getNom() + "\n";
+    }
+    string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
+        return nom;
+    }
+
+        virtual ~CarteTactique() = default;
 private:
     string nom;
 };
@@ -48,14 +55,9 @@ public:
 
     CarteTroupe(const string& nom, Force force, Couleur couleur, Troupe t) : CarteNormale(couleur,force), CarteTactique(nom), troupe(t) {};
 
-    using CarteNormale::setCouleur;
-    using CarteNormale::setForce;
 
     Troupe getTroupe() const { return troupe; }
-    string getDescription() const override{
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique : Troupe = " + toString(troupe);
-    }
+
 
     CarteTroupe mettre_Joker();
     CarteTroupe mettre_PorteBouclier();
@@ -66,6 +68,37 @@ public:
 
 private:
     Troupe troupe;
+    string nom = toString(troupe);
+};
+
+class CarteCombat;  // Déclaration avancée de la classe CarteCombat
+
+class Tuile_tactique :  public Tuile{    // classe Tuile_tactique, héritant de la classe Tuile
+public:
+    Tuile_tactique() : Tuile(), carte_posee_centre(nullptr) {}
+
+    virtual void afficherEtatBorne(size_t num_borne) const {
+        // Cette méthode est appelée par Frontiere::afficherFrontiere()
+        cout << "      ";  // utilisé pour centrer l'affichage
+        if(centrePlein() != true && carte_posee_centre != nullptr)
+            (*carte_posee_centre).afficherCarte();
+        cout << "     |";  // utilisé pour centrer l'affichage
+    }
+
+    const CarteCombat* getCartePoseeCentre() const { return carte_posee_centre; }
+
+    // Méthode vérifiant si le centre de la tuile est plein
+    bool centrePlein() const{ return (*carte_posee_centre).getNom() != ""; }
+
+    void placerCarteCentre(const CarteCombat* c){
+        if (centrePlein())
+            throw PartieException("Le centre de la tuile est deja pleine\n");
+        carte_posee_centre = c;
+        incr_nb_pleine();
+    }
+
+private:
+    const CarteCombat* carte_posee_centre;  // A implémenter pour la version tactique
 };
 
 
@@ -73,10 +106,10 @@ class CarteCombat : public CarteTactique {  // classe Combat, héritant de la cl
 public:
     CarteCombat(const string& nom) : CarteTactique(nom){};
 
-    void mettre_ColinMaillard(Tuile* t) const {
+    void mettre_ColinMaillard(Tuile_tactique* t) const {
         t->placerCarteCentre(*this);
     }
-    void mettre_CombatdeBoue(Tuile* t) const {
+    void mettre_CombatdeBoue(Tuile_tactique* t) const {
         t->placerCarteCentre(*this);
     }
     void afficherCarte()const;
@@ -85,10 +118,7 @@ public:
     }
     string getNom() const { return nom; }
     Combat getCombat() const { return combat; }
-    string getDescription() const override{
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique : Combat = " + toString(combat);
-    }
+
 private:
     Combat combat;
     const string nom = toString(combat);
@@ -102,10 +132,7 @@ public:
 
     string getNom() const { return nom; }
     Ruse getRuse() const { return ruse; }
-    string getDescription() const override{
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique : Ruse = " + toString(ruse);
-    }
+
 
     static void mettre_ChasseurdeTete() ;
     static void mettre_Stratege() ;
@@ -120,36 +147,50 @@ private:
     const string nom = toString(ruse);
 };
 
-class Defausse{
+class Defausse {
 public:
     Defausse() = default;
     Defausse(const Defausse& d) = default;
     Defausse& operator=(const Defausse& d) = default;
-    void ajouterCarte(Carte* c){
+
+    void ajouterCarte(Carte* c) {
         if (cartes.size() >= cartes.max_size()) {
             cout << "La defausse est pleine" << endl;
             return;
         }
-        setCarte(cartes.size(), c);
-        cartes[cartes.size()] = c; // Ajouter le pointeur à la fin de l'array
+        if (c->estTactique()) {
+            CarteNormale* carteNormale = static_cast<CarteNormale*>(c);
+            cartes[cartes.size() - 1] = new CarteNormale(carteNormale->getCouleur(), carteNormale->getForce());
+        } else {
+            CarteTactique* carteTactique = static_cast<CarteTactique*>(c);
+            cartes[cartes.size() - 1] = new CarteTactique(carteTactique->getNom());
+        }
     }
-    void afficherDefausse() const;// TO DO
-    void setCarte(size_t n, Carte* c){// pour alloué une nouvelle carte dans la defausse
-        if (c->estNormale()) {
+
+    void afficherDefausse() const {
+        for (const auto& carte : cartes) {
+            cout << carte->getInfo() << endl;
+        }
+    }
+
+    void setCarte(size_t n, Carte* c) {
+        if (c->estTactique()) {
             CarteNormale* carteNormale = static_cast<CarteNormale*>(c);
             cartes[n] = new CarteNormale(carteNormale->getCouleur(), carteNormale->getForce());
         } else {
             CarteTactique* carteTactique = static_cast<CarteTactique*>(c);
             cartes[n] = new CarteTactique(carteTactique->getNom());
         }
-    ~Defausse(){  // destructeur qui désalloue les cartes de la defausse
-        for (size_t i = 0; i < 6; i++){
-            delete cartes[i];
+    }
+
+    ~Defausse() {
+        for (auto carte : cartes) {
+            delete carte;
         }
     }
 
-private :
-    array<Carte*,6> cartes;
+private:
+    array<Carte*, 6> cartes;
 };
 
 

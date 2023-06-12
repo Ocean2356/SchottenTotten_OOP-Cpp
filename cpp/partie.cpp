@@ -67,20 +67,40 @@ std::ostream& operator<<(std::ostream& f, const Carte& c){
 
 // Méthode permettant de vérifier que toutes les cartes d'un côté de la tuile ont la même couleur
 bool Tuile::verifMemeCouleur(NumJoueur num_joueur) const{
-    Couleur coul = cartes_posees[(int) num_joueur][0]->getCouleur();
-    for (size_t i = 1; i < nb_pleine; i++){
-        if (cartes_posees[(int) num_joueur][i]->getCouleur() != coul)
+    const Carte* premiereCarte = cartes_posees[static_cast<int>(num_joueur)][0];
+    const CarteNormale* premiereCarteNormale = dynamic_cast<const CarteNormale*>(premiereCarte);
+    if (premiereCarteNormale == nullptr) {
+        // La première carte n'est pas une CarteNormale, on considère donc qu'elles n'ont pas la même couleur
+        return false;
+    }
+    Couleur couleur = premiereCarteNormale->getCouleur();
+    for (size_t i = 1; i < nb_pleine; i++) {
+        const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
+        const CarteNormale* carteNormale = dynamic_cast<const CarteNormale*>(carte);
+        if (carteNormale == nullptr || carteNormale->getCouleur() != couleur) {
+            // La carte n'est pas une CarteNormale ou sa couleur est différente
             return false;
+        }
     }
     return true;
 }
 
 // Méthode permettant de vérifier que toutes les cartes d'un côté de la tuile ont la même force
 bool Tuile::verifMemeForce(NumJoueur num_joueur) const{
-    Force force = cartes_posees[(int) num_joueur][0]->getForce();
-    for (size_t i = 1; i < nb_pleine; i++){
-        if (cartes_posees[(int) num_joueur][i]->getForce() != force)
+    const Carte* premiereCarte = cartes_posees[static_cast<int>(num_joueur)][0];
+    const CarteNormale* premiereCarteNormale = dynamic_cast<const CarteNormale*>(premiereCarte);
+    if (premiereCarteNormale == nullptr) {
+        // La première carte n'est pas une CarteNormale, on considère donc qu'elles n'ont pas la même force
+        return false;
+    }
+    Force force = premiereCarteNormale->getForce();
+    for (size_t i = 1; i < nb_pleine; i++) {
+        const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
+        const CarteNormale* carteNormale = dynamic_cast<const CarteNormale*>(carte);
+        if (carteNormale == nullptr || carteNormale->getForce() != force) {
+            // La carte n'est pas une CarteNormale ou sa force est différente
             return false;
+        }
     }
     return true;
 }
@@ -90,14 +110,17 @@ void Tuile::ordonnerCartes(NumJoueur num_joueur){
     // on utilise ici un tri à bulle. Ce tri n'est pas le plus optimisé, mais il est simple et largement suffisant
     // en effet, dans ce cas, il y a au maximum 4 cartes d'un côté de la frontière. Le coût du tri est donc faible
     bool modif;  // on arrête le parcours lorsque plus aucune modification n'a été effectuée
-    do{
+    do {
         modif = false;
-        for (size_t i = 0; i < nb_pleine - 1; i++){
-            if (cartes_posees[(int) num_joueur][i]->getForce() > cartes_posees[(int) num_joueur][i + 1]->getForce()){
-                // On échange les deux cartes
-                auto tmp = cartes_posees[(int) num_joueur][i];
-                cartes_posees[(int) num_joueur][i] = cartes_posees[(int) num_joueur][i + 1];
-                cartes_posees[(int) num_joueur][i + 1] = tmp;
+        for (size_t i = 0; i < nb_pleine - 1; i++) {
+            const Carte* carte1 = cartes_posees[static_cast<int>(num_joueur)][i];
+            const Carte* carte2 = cartes_posees[static_cast<int>(num_joueur)][i + 1];
+            const CarteNormale* carteNormale1 = dynamic_cast<const CarteNormale*>(carte1);
+            const CarteNormale* carteNormale2 = dynamic_cast<const CarteNormale*>(carte2);
+            if (carteNormale1 != nullptr && carteNormale2 != nullptr &&
+                carteNormale1->getForce() > carteNormale2->getForce()) {
+                std::swap(cartes_posees[static_cast<int>(num_joueur)][i],
+                          cartes_posees[static_cast<int>(num_joueur)][i + 1]);
                 modif = true;
             }
         }
@@ -107,23 +130,43 @@ void Tuile::ordonnerCartes(NumJoueur num_joueur){
 
 // Méthode permettant de vérifier que les cartes d'un côté de la tuile forment une suite
 bool Tuile::verifSuite(NumJoueur num_joueur){
-    ordonnerCartes(num_joueur);  // on tri les cartes de ce côté de la tuile
-    for (size_t i = 0; i < nb_pleine - 1; i++)
-        if ((unsigned int) cartes_posees[(int) num_joueur][i]->getForce() + 1 !=
-            (unsigned int) cartes_posees[(int) num_joueur][i + 1]->getForce())
-            return false; // on a trouvé deux forces qui ne se suivaient pas
-    return true;
-}
+        ordonnerCartes(num_joueur);  // on trie les cartes de ce côté de la tuile
+
+        std::vector<const CarteNormale*> cartes_normales;
+        cartes_normales.reserve(nb_pleine);
+
+        for (size_t i = 0; i < nb_pleine; i++) {
+            const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
+            const CarteNormale* carte_normale = dynamic_cast<const CarteNormale*>(carte);
+            if (carte_normale != nullptr) {
+                cartes_normales.push_back(carte_normale);
+            }
+        }
+
+        for (size_t i = 0; i < cartes_normales.size() - 1; i++) {
+            if (static_cast<int>(cartes_normales[i]->getForce()) + 1 != static_cast<int>(cartes_normales[i + 1]->getForce())) {
+                return false; // on a trouvé deux forces qui ne se suivaient pas
+            }
+        }
+        return true;
+    }
+
 
 
 // Méthode permettant de sommer la force de toutes les cartes d'un côté de la tuile
-unsigned int Tuile::getSomme(NumJoueur num_joueur) const{
+unsigned int Tuile::getSomme(NumJoueur num_joueur) const {
     unsigned int somme = 0;
-    for (size_t i = 0; i < nb_pleine; i++){
-        somme += (unsigned int) cartes_posees[(int) num_joueur][i]->getForce();
+    for (size_t i = 0; i < nb_pleine; i++) {
+        const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
+        const CarteNormale* carteNormale = dynamic_cast<const CarteNormale*>(carte);
+        if (carteNormale != nullptr) {
+            somme += static_cast<unsigned int>(carteNormale->getForce());
+        }
     }
     return somme;
 }
+
+
 
 // Méthode permettant de vérifier qu'un joueur peut revendiquer une tuile
 bool Tuile::verifRevendiquable(NumJoueur num_joueur) {
@@ -263,9 +306,11 @@ void Agent:: jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos
     if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
         throw PartieException("La tuile est deja pleine\n");
     const Carte& c = main.jouerCarte(pos_carte);  // on récupère la carte à jouer
-    f = c.getForce(); // f est utilisée pour mettre à jour le tableau des cartes jouées
-    coul = c.getCouleur();  // coul est utilisée pour mettre à jour le tableau des cartes jouées
+    const CarteNormale& carteNormale = dynamic_cast<const CarteNormale&>(c);
+    f = carteNormale.getForce();// f est utilisée pour mettre à jour le tableau des cartes jouées
+    coul = carteNormale.getCouleur();// coul est utilisée pour mettre à jour le tableau des cartes jouées
     frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);  // on place la carte sur la frontière
+
 }
 
 // Méthode permettant la saisie par l'utilisateur d'une carte à jouer

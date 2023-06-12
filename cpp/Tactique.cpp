@@ -5,7 +5,6 @@
 #include <string>
 
 
-using namespace std;
 
 
 // Fonction permettant de retourner une string correspondant à un type de carte tactique donné
