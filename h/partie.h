@@ -91,7 +91,7 @@ private:
 };
 
 template<class Carte, size_t N>  // La pioche peut être une pioche de cartes normales ou une pioche de cartes tactiques
-class Pioche final{  // classe Pioche représentant une des pioches du jeu
+class Pioche {  // classe Pioche représentant une des pioches du jeu
 public:
     Pioche() : nbCartes(N){}
     Pioche(const Pioche& p) = delete;
@@ -112,7 +112,7 @@ public:
     }
 
     // Méthode permettant de piocher une carte
-    const Carte& piocher(){
+    virtual const Carte& piocher(){
         if (estVide())
             throw PartieException("La pioche est vide");
         // Génération d'un nombre aléatoire entre 0 et nbCartes - 1 (pour piocher une des cartes piochable de la pioche)

@@ -136,3 +136,21 @@ void CarteRuse::afficherCarte()const{
         cout<< "|  traitre |";
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

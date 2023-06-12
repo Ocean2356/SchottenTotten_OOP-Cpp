@@ -66,25 +66,15 @@ public:
 
 private:
     Troupe troupe;
-    string nom = toString(troupe);
+
 };
 
 class CarteCombat;  // Déclaration avancée de la classe CarteCombat
 
+
 class Tuile_tactique :  public Tuile{    // classe Tuile_tactique, héritant de la classe Tuile
 public:
     Tuile_tactique() : Tuile(), carte_posee_centre(nullptr) {}
-
-    virtual void afficherEtatBorne(size_t num_borne) const {
-        // Cette méthode est appelée par Frontiere::afficherFrontiere()
-        cout << "      ";  // utilisé pour centrer l'affichage
-        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_posee_centre);
-        if (carte_combat != nullptr) {
-            carte_combat->afficherCarte();
-        }
-        cout << "     |";  // utilisé pour centrer l'affichage
-    }
-
     const CarteTactique* getCartePoseeCentre() const { return carte_posee_centre; }
 
     // Méthode vérifiant si le centre de la tuile est plein
@@ -96,6 +86,7 @@ public:
         carte_posee_centre = c;
         incr_nb_pleine();
     }
+
 
 private:
     const CarteTactique* carte_posee_centre;  // A implémenter pour la version tactique
@@ -153,7 +144,7 @@ private:
 
 
 
-class Defausse {
+class Defausse : public Pioche{  // classe Defausse, héritant de la classe Pioche
 public:
     Defausse() = default;
     Defausse(const Defausse& d) = default;
@@ -197,6 +188,23 @@ public:
 
 private:
     array<Carte*, 6> cartes;
+};
+
+class Controleur {
+public:
+    virtual void afficherEtatBorne(size_t num_borne) const {
+        // Cette méthode est appelée par Frontiere::afficherFrontiere()
+        cout << "      ";  // utilisé pour centrer l'affichage
+        Tuile_tactique tuile; // Création d'un objet Tuile_tactique
+        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(tuile.getCartePoseeCentre());
+        if (carte_combat != nullptr) {
+            carte_combat->afficherCarte();
+        }
+        cout << "     |";  // utilisé pour centrer l'affichage
+    }
+
+private:
+
 };
 
 class Affichage: public CarteTactique{ // classe Affichage, héritant de la classe CarteTactique
