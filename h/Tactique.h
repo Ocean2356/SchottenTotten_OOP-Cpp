@@ -26,27 +26,36 @@ string toString(Troupe t);
 string toString(Combat c);
 string toString(Ruse r);
 
+
+
 class CarteTactique : public Carte{  // CarteTactique, classe héritant de la classe abstraite carte
 public:
     CarteTactique(const string& n) : nom(n){}
     CarteTactique() = default;
     bool estTactique() const override {return true;}
     bool estNormale() const override {return false;}
-    string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
-        return nom;
-    }
+    string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
 
     // méthode utilisée pour informer l'utilisateur des effets d'une carte
     virtual string getDescription() const = 0;
     virtual ~CarteTactique() = default;
 private:
-    const string& nom;
+    string nom;
 };
 
 class CarteTroupe : public CarteNormale, public CarteTactique{  // classe Troupe, héritant de la classe CarteTactique
 public:
-    CarteTroupe(const string &nom, Force force, Couleur couleur) : CarteNormale(couleur,force), nom(nom) {};
-    string getNom() const { return nom; }
+
+    CarteTroupe(const string& nom, Force force, Couleur couleur, Troupe t) : CarteNormale(couleur,force), CarteTactique(nom), troupe(t) {};
+
+    using CarteNormale::setCouleur;
+    using CarteNormale::setForce;
+
+    Troupe getTroupe() const { return troupe; }
+    string getDescription() const override{
+        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
+        return "Tactique : Troupe = " + toString(troupe);
+    }
 
     CarteTroupe mettre_Joker();
     CarteTroupe mettre_PorteBouclier();
@@ -55,14 +64,8 @@ public:
     void afficherCarte() const;
     void afficherDosCarte() const { cout << "| Tactique |"; }
 
-    Troupe getTroupe() const { return troupe; }
-    string getDescription() const override{
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique : Troupe = " + toString(troupe);
-    }
 private:
     Troupe troupe;
-    const string nom = toString(troupe);
 };
 
 
