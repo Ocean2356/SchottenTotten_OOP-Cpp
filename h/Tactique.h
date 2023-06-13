@@ -94,7 +94,7 @@ private:
 
 class CarteCombat : public CarteTactique {  // classe Combat, héritant de la classe CarteTactique
 public:
-    CarteCombat(const string& nom) : CarteTactique(nom){};
+    CarteCombat(const string& nom, Combat c) : CarteTactique(nom), combat(c){};
 
     void mettre_ColinMaillard(Tuile_tactique* t) const {
         const CarteTactique* carte_tactique = dynamic_cast<const CarteTactique*>(this);
@@ -123,7 +123,7 @@ private:
 
 class CarteRuse : public CarteTactique {  // classe Ruse, héritant de la classe CarteTactique
 public:
-    CarteRuse(const string& nom) : CarteTactique(nom)  {};
+    CarteRuse(const string& nom, Ruse r) : CarteTactique(nom), ruse(r) {};
 
     string getNom() const { return nom; }
     Ruse getRuse() const { return ruse; }
