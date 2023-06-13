@@ -316,53 +316,17 @@ void Agent:: jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos
 // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
 Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
     Movement mvt;  // string permettant d'indiquer les actions à effectuer
-    f.afficherFrontiere();
+    PremiereNormale().ui.afficherFrontiere(f);
     string recup_choix;
     if (main.getNbCartes() > 0){  // s'il reste encore des cartes au joueur
-        cout << "Choix de la carte a jouer\n";
-        for (size_t i = 0; i < main.getNbCartes(); i++)
-            cout << "Entrez " << i + 1 << " pour jouer la carte " << main.getCarte(i) << "\n";
-        unsigned int choix_carte = -1;
-        while (choix_carte < 1 || choix_carte > main.getNbCartes()){
-            cout << "Votre Choix : ";
-            cin >> recup_choix;
-            if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= main.getNbCartes())
-                choix_carte = (unsigned int) (recup_choix[0] - '0');
-        }
-        --choix_carte;
+        Pos choix_carte = PremiereNormale().ui.getChoixCarte(main);
         mvt += "Carte:";
         mvt += (char) choix_carte;
 
-        cout << "Vous pouvez jouer sur les bornes suivantes: \n";
-        vector <int> borne_jouable;
-        for (size_t i = 0; i < f.getNbTuile(); i++){
-            if (!f.tuiles[i].cotePlein(joueur_num) && !f.tuiles[i].estRevendiquee()){
-                borne_jouable.push_back((int) i+1);
-                cout << "Entrez " << i + 1 << " pour jouer sur la borne numero " << i + 1 << "\n";
-            }
-        }
-        if (borne_jouable.empty())
-            // on ne peut jouer sur aucune borne (pourrait arriver en variante tactique)
-            return "";
-        unsigned int choix_borne = 0;
-        bool saisie_correcte = false;
-        while (!saisie_correcte){
-            cout << "Votre Choix : ";
-            cin >> recup_choix;
-            if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9){
-                choix_borne = (unsigned int) (recup_choix[0] - '0');
-                for (auto& b : borne_jouable){
-                    if (b == choix_borne){
-                        saisie_correcte = true;
-                        break;
-                    }
-                }
-            }
-            if (!saisie_correcte)
-                cout << "Veuillez entrez un numero d'une borne sur laquelle vous pouvez jouer\n";
-        }
+        Pos choix_borne = PremiereNormale().ui.getChoixBorne(f, joueur_num);
+        if (choix_borne == ERREUR) return "";
         mvt += "Borne:";
-        mvt += (char) (choix_borne - 1);
+        mvt += (char) (choix_borne);
     }
     return mvt;
 }
@@ -370,59 +334,60 @@ Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
 
 Movement Agent::choisirBornesARevendiquer(Frontiere& f, NumJoueur joueur_num){
     Movement mvt;
-    f.afficherFrontiere();
+    PremiereNormale().ui.afficherFrontiere(f);
 
     string choix_revendiquer;
-    unsigned int nb_bornes_a_revendiquer = 0;
+    Pos nb_bornes_a_revendiquer = 0;
     while (choix_revendiquer != "oui" && choix_revendiquer != "non"){
         cout << "souhaitez-vous revendiquer une borne ? (oui/non)\n";
         cin >> choix_revendiquer;
         size_t i = 0;
         for (auto& c: choix_revendiquer)
             choix_revendiquer[i++] = (char) tolower(c);
-        if (choix_revendiquer == "oui"){
-            int continuer = 1;
-            vector <unsigned int> bornes_a_revendiquer;
-            string recup_choix;
-            while (continuer != 0){
-                unsigned int choix_borne_a_revendiquer = 0;
-                while (choix_borne_a_revendiquer < 1 || choix_borne_a_revendiquer > f.getNbTuile()){
-                    cout << "Entrez le numero de la borne a revendiquer  (entre 1 et " << f.getNbTuile() << "): ";
-                    cin >> recup_choix;
-                    if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9)
-                        choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
-                }
-                if (f.verifRevendiquable(choix_borne_a_revendiquer - 1, joueur_num)){
-                    // Si la tuile est revendiquable par le joueur
-                    bool saisie_incorrecte = false;
-                    for (auto& b : bornes_a_revendiquer)
-                        if (b == choix_borne_a_revendiquer){
-                            saisie_incorrecte = true;
-                            cout << "Veuillez entrer un numero d'une AUTRE borne\n";
-                        }
-                    if (! saisie_incorrecte){
-                        bornes_a_revendiquer.push_back(choix_borne_a_revendiquer);
-                        mvt += "Revendiquer:";
-                        mvt += (char) (choix_borne_a_revendiquer - 1);
-                        nb_bornes_a_revendiquer++;
-                        do{
-                            saisie_incorrecte = true;
-                            cout << "Revendiquer une autre borne ? (entrez 0 si non, un entier strictement positif si oui): ";
-                            cin >> recup_choix;
-                            if ((unsigned int) (recup_choix[0] - '0') >= 0 && (unsigned int) (recup_choix[0] - '0') <= 9){
-                                saisie_incorrecte = false;
-                                choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
-                                continuer = choix_borne_a_revendiquer != 0;
-                            }
-                        }while (continuer && saisie_incorrecte);
-                    }
-                } else{
-                    // sinon, on considère que le joueur s'est trompé
-                    // et qu'il n'essayera pas de revendiquer d'autres bornes pour ce tour
-                    cout << "La borne " << choix_borne_a_revendiquer << " ne peut pas etre revendiquee";
-                    continuer = 0;
-                }
+        if (choix_revendiquer != "oui") continue;
+
+        int continuer = 1;
+        vector <unsigned int> bornes_a_revendiquer;
+        string recup_choix;
+        while (continuer != 0){
+            unsigned int choix_borne_a_revendiquer = 0;
+            while (choix_borne_a_revendiquer < 1 || choix_borne_a_revendiquer > f.getNbTuile()){
+                cout << "Entrez le numero de la borne a revendiquer  (entre 1 et " << f.getNbTuile() << "): ";
+                cin >> recup_choix;
+                if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9)
+                    choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
             }
+            if (f.verifRevendiquable(choix_borne_a_revendiquer - 1, joueur_num)){
+                // Si la tuile est revendiquable par le joueur
+                bool saisie_incorrecte = false;
+                for (auto& b : bornes_a_revendiquer)
+                    if (b == choix_borne_a_revendiquer){
+                        saisie_incorrecte = true;
+                        cout << "Veuillez entrer un numero d'une AUTRE borne\n";
+                    }
+                if (! saisie_incorrecte){
+                    bornes_a_revendiquer.push_back(choix_borne_a_revendiquer);
+                    mvt += "Revendiquer:";
+                    mvt += (char) (choix_borne_a_revendiquer - 1);
+                    nb_bornes_a_revendiquer++;
+                    do{
+                        saisie_incorrecte = true;
+                        cout << "Revendiquer une autre borne ? (entrez 0 si non, un entier strictement positif si oui): ";
+                        cin >> recup_choix;
+                        if ((unsigned int) (recup_choix[0] - '0') >= 0 && (unsigned int) (recup_choix[0] - '0') <= 9){
+                            saisie_incorrecte = false;
+                            choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
+                            continuer = choix_borne_a_revendiquer != 0;
+                        }
+                    }while (continuer && saisie_incorrecte);
+                }
+            } else{
+                // sinon, on considère que le joueur s'est trompé
+                // et qu'il n'essayera pas de revendiquer d'autres bornes pour ce tour
+                cout << "La borne " << choix_borne_a_revendiquer << " ne peut pas etre revendiquee";
+                continuer = 0;
+            }
+
         }
     }
     mvt += "nb:";
@@ -541,44 +506,102 @@ void PremiereNormale::initierMains(){
             agent.piocher(carte);
         }
 }
-//
-//void PremiereNormale::afficherFrontiere(const Frontiere& f) {
-//    size_t nb_tuile = f.nb_tuile;
-//    cout
-//            << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
-//    // Affichage des cartes des tuiles du côté du premier joueur
-//    for (size_t i = 0; i < nb_tuile; i++)
-//        f.tuiles[i].afficherCote(0);
-//    cout << "\n";
-//
-//    // Affichage de l'état des tuiles (le numéro du joueur qui l'a revendiquée ou le numéro de la tuile si elle n'est pas revendiquée)
-//    for (size_t i = 0; i < nb_tuile; i++)
-//        f.tuiles[i].afficherEtatBorne(i + 1);
-//    cout << "\n";
-//
-//    // Affichage des cartes des tuiles du côté du second joueur
-//    for (size_t i = 0; i < nb_tuile; i++)
-//        f.tuiles[i].afficherCote(1);
-//    cout
-//            << "\n---------------------------------------------------------------------------------------------------------------------------------------------------------\n";
-//}
 
-void Frontiere:: afficherFrontiere() const{
+void UI::afficherFrontiere(const Frontiere& f) const{
+    Pos nb_tuile = f.nb_tuile;
     cout
             << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
     // Affichage des cartes des tuiles du côté du premier joueur
     for (size_t i = 0; i < nb_tuile; i++)
-        tuiles[i].afficherCote(0);
+        afficherCote(f.tuiles[i], 0);
     cout << "\n";
 
     // Affichage de l'état des tuiles (le numéro du joueur qui l'a revendiquée ou le numéro de la tuile si elle n'est pas revendiquée)
     for (size_t i = 0; i < nb_tuile; i++)
-        tuiles[i].afficherEtatBorne(i + 1);
+//        f.tuiles[i].afficherEtatBorne(i + 1);
+        afficherEtatBorne(f.tuiles[i], i+1);
     cout << "\n";
 
     // Affichage des cartes des tuiles du côté du second joueur
     for (size_t i = 0; i < nb_tuile; i++)
-        tuiles[i].afficherCote(1);
+        afficherCote(f.tuiles[i], 1);
+
     cout
             << "\n---------------------------------------------------------------------------------------------------------------------------------------------------------\n";
+}
+
+// Méthode permettant d'afficher les cartes d'un côté de la tuile
+void UI::afficherCote(const Tuile &t, size_t cote) const{
+    size_t iter = 1;
+    for (auto c: t.cartes_posees[cote]){
+        cout << *c;
+        iter++;
+    }
+    while (iter < 5){
+        // il y a au maximum 4 cartes d'un côté d'une tuile. Pour centrer l'affichage, on remplit toujours les positions vides
+        cout << "    ";
+        iter++;
+    }
+    cout << "|";
+}
+
+// Méthode permettant d'afficher l'état d'une tuile
+void UI::afficherEtatBorne(const Tuile &t, size_t num_borne) const{
+    cout << "      ";  // utilisé pour centrer l'affichage
+    if (t.revendiquee == TuileRevendiquee::revendiquee_joueur1)
+        cout << "/R1/ ";
+    else if (t.revendiquee == TuileRevendiquee::revendiquee_joueur2)
+        cout << "/R2/ ";
+    else
+        cout << "/B" << num_borne << "/ ";
+    cout << "     |";  // utilisé pour centrer l'affichage
+}
+
+Pos UI::getChoixCarte(Main& main) {
+    string recup_choix;
+    cout << "Choix de la carte a jouer\n";
+    for (Pos i = 0; i < main.getNbCartes(); i++)
+    cout << "Entrez " << i + 1 << " pour jouer la carte " << main.getCarte(i) << "\n";
+    Pos choix_carte = -1;
+    while (choix_carte < 1 || choix_carte > main.getNbCartes()){
+    cout << "Votre Choix : ";
+    cin >> recup_choix;
+    if ((Pos) (recup_choix[0] - '0') >= 1 && (Pos) (recup_choix[0] - '0') <= main.getNbCartes())
+    choix_carte = (Pos) (recup_choix[0] - '0');
+    }
+    --choix_carte;
+    return choix_carte;
+}
+
+Pos UI::getChoixBorne(const Frontiere& f, NumJoueur joueur_num) {
+    string recup_choix;
+    cout << "Vous pouvez jouer sur les bornes suivantes: \n";
+    vector <int> borne_jouable;
+    for (size_t i = 0; i < f.getNbTuile(); i++){
+        if (!f.tuiles[i].cotePlein(joueur_num) && !f.tuiles[i].estRevendiquee()){
+            borne_jouable.push_back((int) i+1);
+            cout << "Entrez " << i + 1 << " pour jouer sur la borne numero " << i + 1 << "\n";
+        }
+    }
+    if (borne_jouable.empty())
+        // on ne peut jouer sur aucune borne (pourrait arriver en variante tactique)
+        return -1;
+    unsigned int choix_borne = 0;
+    bool saisie_correcte = false;
+    while (!saisie_correcte){
+        cout << "Votre Choix : ";
+        cin >> recup_choix;
+        if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9){
+            choix_borne = (unsigned int) (recup_choix[0] - '0');
+            for (auto& b : borne_jouable){
+                if (b == choix_borne){
+                    saisie_correcte = true;
+                    break;
+                }
+            }
+        }
+        if (!saisie_correcte)
+            cout << "Veuillez entrez un numero d'une borne sur laquelle vous pouvez jouer\n";
+    }
+    return --choix_borne;
 }

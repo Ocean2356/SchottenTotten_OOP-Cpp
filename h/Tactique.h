@@ -144,7 +144,8 @@ private:
 
 
 
-class Defausse : public Pioche{  // classe Defausse, héritant de la classe Pioche
+//class Defausse : public Pioche {  // classe Defausse, héritant de la classe Pioche
+class Defausse {  // classe Defausse, héritant de la classe Pioche
 public:
     Defausse() = default;
     Defausse(const Defausse& d) = default;

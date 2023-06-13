@@ -22,6 +22,8 @@ using namespace std;
 using Ordre = array<Joueur*  , 2>; // ordre des joueurs qui jouent
 using Resultat = array<unsigned int, 2>; // score des joueurs à la fin d'une partie
 using Movement = string; // string représentant une action à effectuer (jouer telle carte sur telle borne, revendiquer telle borne...)
+using Pos = char;
+const Pos ERREUR = -1;
 
 // utilisé pour stocker, pour chaque tuile, si elle a été revendiquée et par quel joueur
 enum class TuileRevendiquee{non_revendiquee, revendiquee_joueur1, revendiquee_joueur2};
@@ -197,37 +199,10 @@ public:
     // revendique une tuile pour un joueur
     virtual void revendiquer(NumJoueur num_joueur);
 
-    // Méthode permettant d'afficher les cartes d'un côté de la tuile
-    virtual void afficherCote(size_t cote) const{
-        // Cette méthode est appelée par Frontiere::afficherFrontiere()
-        size_t iter = 1;
-        for (auto c: cartes_posees[cote]){
-            cout << *c;
-            iter++;
-        }
-        while (iter < 5){
-            // il y a au maximum 4 cartes d'un côté d'une tuile. Pour centrer l'affichage, on remplit toujours les positions vides
-            cout << "    ";
-            iter++;
-        }
-        cout << "|";
-    }
-
-    // Méthode permettant d'afficher l'état d'une tuile
-    virtual void afficherEtatBorne(size_t num_borne) const{
-        // Cette méthode est appelée par Frontiere::afficherFrontiere()
-        cout << "      ";  // utilisé pour centrer l'affichage
-        if (revendiquee == TuileRevendiquee::revendiquee_joueur1)
-            cout << "/R1/ ";
-        else if (revendiquee == TuileRevendiquee::revendiquee_joueur2)
-            cout << "/R2/ ";
-        else
-            cout << "/B" << num_borne << "/ ";
-        cout << "     |";  // utilisé pour centrer l'affichage
-    }
     virtual ~Tuile() = default;
     void incr_nb_pleine(){ nb_pleine++; }
 private:
+    friend class UI;
     array<vector<const Carte*  >, 2> cartes_posees;  // représente les cartes posées de part et d'autre de la tuile
     //CarteTactique carte_posee_centre;  // A implémenter pour la version tactique
     unsigned int nb_pleine;  // nombre de cartes pour que la tuile soit pleine d'un côté (3 en général, 4 si la carte combat de Boue est posée au centre)
@@ -256,6 +231,7 @@ public:
 
 private:
     friend class Agent;  // un agent peut accéder aux attributs de la classe tuile, en particulier tuiles
+    friend class UI;
     static const unsigned int nb_tuile = 9; // le nombre de tuiles vaut 9 pour la première édition // TODO changer pour pouvoir gérer la deuxième édition (7 tuiles)
     array<Tuile, nb_tuile> tuiles;  // représente l'ensemble des tuiles
 };
@@ -322,6 +298,7 @@ public:
     }
     virtual ~Agent() = default;
 private:
+    friend class UI;
     Main main;  // un agent a une main
 };
 
@@ -363,6 +340,17 @@ protected:
     Frontiere frontiere;
 };
 
+class UI
+{
+public:
+    virtual void afficherFrontiere(const Frontiere &f) const;
+    virtual void afficherCote(const Tuile &t, size_t cote) const;
+    virtual void afficherEtatBorne(const Tuile &t, size_t num_borne) const;
+    virtual Pos getChoixCarte(Main& main);
+    virtual Pos getChoixBorne(const Frontiere& f, NumJoueur joueur_num);
+//    virtual Pos getBorneARevendiquer;
+};
+
 // classe abstraite permettant de spécifier certaines méthodes et caractéristiques communes aux variantes d'une partie de la première édition
 class Premiere : public Partie{
 public:
@@ -400,7 +388,7 @@ public:
     // Méthode permettant de jouer un tour dans son intégralité (choix de la carte à jouer, revendiquer une ou plusieurs bornes, piocher)
     void jouerTour() override;
     ~PremiereNormale() = default;
-//    InterfaceST interfaceST;
+    UI ui = UI();
 private:
     static const int NMAIN = 6;  // 6 cartes dans la main dans cette variante
     array<Agent, 2> agents{Agent(NMAIN), Agent(NMAIN)};  // tableau des agents de la partie
