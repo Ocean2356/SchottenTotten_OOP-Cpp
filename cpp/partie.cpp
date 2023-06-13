@@ -414,7 +414,7 @@ Resultat Partie::terminer(){
 }
 
 // Méthode permettant d'initialiser la pioche normale
-void Premiere::initierPiocheNormale(){
+void PremiereNormale::initierPiocheNormale(){
     // on alloue une nouvelle carte pour chaque force et couleur (par appel de Pioche::setCarte)
     size_t pos = 0;
     for (auto& c: Couleurs)

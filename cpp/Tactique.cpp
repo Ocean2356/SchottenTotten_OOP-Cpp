@@ -5,6 +5,9 @@
 #include <string>
 
 
+std::initializer_list<Troupe> Troupes ={Troupe::Joker, Troupe::Espion, Troupe::Porte_Bouclier};  // liste des cartes troupes
+std::initializer_list<Combat> Combats ={Combat::Colin_Maillard, Combat::Combat_de_Boue };  // liste des cartes combats
+std::initializer_list<Ruse> Ruses ={Ruse::Chasseur_de_tete, Ruse::Stratege, Ruse::Banshee, Ruse::Traitre };  // liste des cartes combats
 
 
 // Fonction permettant de retourner une string correspondant à un type de carte tactique donné
@@ -137,7 +140,61 @@ void CarteRuse::afficherCarte()const{
     }
 }
 
+void CarteRuse::mettre_ChasseurdeTete() {
+    cout << "Vous avez joué la carte Chasseur de Tête" << endl;
+    cout  << "Veuillez choisir le nombre de carte Clan que vous voulez piocher :" << endl;
+    int nbCarteClan;
+    cin >> nbCarteClan;
+    while (nbCarteClan>3 || nbCarteClan<0){
+        cout  << "Veuillez choisir le nombre de carte Clan que vous voulez piocher (entre 1 et 3 cartes) :" << endl;
+        cin >> nbCarteClan;
+    }
+    switch(nbCarteClan){
+        case 0 : {
+            cout << "Vous voulez donc piocher 3 cartes tactiques" << endl;
 
+            break;
+        }
+
+
+        case 1:{
+            cout << "Vous voulez donc piocher 1 carte clan et 2 cartes tactiques" << endl;
+
+            break;
+        }
+
+
+        case 2: {
+            cout << "Vous voulez donc piocher 2 cartes clans et 1 carte tactique" << endl;
+
+            break;
+        }
+
+
+        case 3: {
+            cout << "Vous voulez donc piocher 3 cartes clans" << endl;
+            for (int k=0;k<3;k++){
+
+            }
+
+            break;
+
+        }
+
+    }
+}
+
+/*
+// Méthode permettant d'initialiser la pioche normale
+void PremiereTactique::initierPiocheTactique(){
+    // on alloue une nouvelle carte pour chaque force et couleur (par appel de Pioche::setCarte)
+    size_t pos = 0;
+    for (auto& t: Troupes) piocheTactique.setCarte(pos++,t);
+    for (auto& c: Combats) piocheTactique.setCarte(pos++,c);
+    for (auto& r: Ruses) piocheTactique.setCarte(pos++,r);
+
+}
+*/
 
 
 

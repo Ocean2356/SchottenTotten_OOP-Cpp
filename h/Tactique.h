@@ -12,6 +12,7 @@ using namespace std;
 
 
 // caractéristiques
+//enum class Tactique{Troupe, Combat, Ruse};
 enum class Troupe{Joker,Espion, Porte_Bouclier};
 enum class Combat{Colin_Maillard, Combat_de_Boue};
 enum class Ruse{Chasseur_de_tete, Stratege, Banshee, Traitre};
@@ -28,27 +29,6 @@ string toString(Ruse r);
 
 
 
-class CarteTactique : public Carte{  // CarteTactique, classe héritant de la classe abstraite carte
-public:
-    CarteTactique(const string& n) : nom(n){}
-    CarteTactique() = default;
-    bool estTactique() const override {return true;}
-    string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
-
-
-    // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    string getDescription() const override {
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique :  "  + getNom() + "\n";
-    }
-    string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
-        return nom;
-    }
-
-        virtual ~CarteTactique() = default;
-private:
-    string nom;
-};
 
 class CarteTroupe : public CarteNormale, public CarteTactique{  // classe Troupe, héritant de la classe CarteTactique
 public:
@@ -216,7 +196,27 @@ private:
 };
 
 
+// classe correspondant à la variante Tactique de la première édition de Schotten-Totten
+class PremiereTactique final : public Premiere{
+public:
+    PremiereTactique();
+    // Méthode permettant de jouer un tour dans son intégralité (choix de la carte à jouer, revendiquer une ou plusieurs bornes, piocher)
+    void jouerTour() override;
+    void initierPiocheTactique();  // initialisation de la pioche tactique
+    ~PremiereTactique() = default;
+    UI ui = UI();
+private:
+    static const int NMAIN = 7;  // 6 cartes dans la main dans cette variante
+    array<Agent, 2> agents{Agent(NMAIN), Agent(NMAIN)};  // tableau des agents de la partie
+    // using TableauJouee = array<array<bool, NFORCE>, NCOULEUR>;  // TODO attention, ne sert que pour PremiereNormale, faire attention en impélmentant la version tactique
+    // TableauJouee tableauJouee;  // tableau utilisé pour stocker les cartes déjà jouées // TODO s'en servir pour vérifier si une borne est revendiquable ou non avant qu'elle ne soit pleine de l'autre côté
 
+    // Méthode permettant d'initialiser les agents (appelée par la méthode Premiere::commencer)
+    void initierAgents(Ordre ordre) override;
+
+    // Méthode permettant d'initialiser les mains (appelée par la méthode Premiere::commencer)
+    void initierMains() override;
+};
 
 
 #endif //TACTIQUE_H
