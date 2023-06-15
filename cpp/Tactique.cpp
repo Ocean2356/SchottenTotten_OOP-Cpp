@@ -10,7 +10,8 @@ std::initializer_list<Combat> Combats ={Combat::Colin_Maillard, Combat::Combat_d
 std::initializer_list<Ruse> Ruses ={Ruse::Chasseur_de_tete, Ruse::Stratege, Ruse::Banshee, Ruse::Traitre };  // liste des cartes combats
 
 
-// Fonction permettant de retourner une string correspondant à un type de carte tactique donné
+
+// Fonction permettant de retourner une string correspondant à un type de carte tactique troupe donné
 string toString(Troupe t) {
     switch (t) {
         case Troupe::Joker:

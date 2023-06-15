@@ -95,53 +95,6 @@ private:
     Force force;
 };
 
-class CarteTactique : public Carte{  // CarteTactique, classe héritant de la classe abstraite carte
-public:
-    CarteTactique(const string& n) : nom(n){}
-    CarteTactique() = default;
-    bool estTactique() const override {return true;}
-    string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
-
-
-    // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    string getDescription() const override {
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique :  "  + getNom() + "\n";
-    }
-    string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
-        return nom;
-    }
-
-    virtual ~CarteTactique() = default;
-private:
-    string nom;
-};
-
-/*
-class CarteTactique : public Carte{  // CarteTactique, classe héritant de la classe abstraite carte
-public:
-    CarteTactique(const Tactique& tac) : tactique(tac){}
-    CarteTactique() = default;
-    bool estTactique() const override {return true;}
-    Tactique getTactique() const {return tactique;}
-    string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
-
-
-    // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    string getDescription() const override {
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique :  "  + getNom() + "\n"; //TODO à mettre getTroupe a la place
-    }
-    string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
-        return nom;
-    }
-
-    virtual ~CarteTactique() = default;
-private:
-    string nom; //TODO inutile à enlever
-    Tactique tactique;
-};*/
-
 template<class Carte, size_t N>  // La pioche peut être une pioche de cartes normales ou une pioche de cartes tactiques
 class Pioche {  // classe Pioche représentant une des pioches du jeu
 public:
@@ -265,7 +218,7 @@ private:
     TuileRevendiquee revendiquee;  // indique si la tuile est revendiquée (et par quel joueur) ou non
 };
 
-
+//template<class T>
 class Frontiere final{  // classe permettant de représenter une frontière
 public:
     Frontiere() = default;
@@ -339,16 +292,16 @@ public:
     }
 
     // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-    Movement choisirCarteAJouer(const Frontiere& frontiere, NumJoueur joueur_num);
+    virtual Movement choisirCarteAJouer(const Frontiere& frontiere, NumJoueur joueur_num);
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-    void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
+    virtual void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
 
     // Méthode permettant la saisie par l'utilisateur d'une ou plusieurs bornes à revendiquer
-    Movement choisirBornesARevendiquer(Frontiere& frontiere, NumJoueur joueur_num);
+    virtual Movement choisirBornesARevendiquer(Frontiere& frontiere, NumJoueur joueur_num);
 
     // Méthode permettant de revendiquer une borne dont le numéro est donné
-    void revendiquerBorne(Frontiere& frontiere, unsigned int num_borne, NumJoueur joueur_num){
+    virtual void revendiquerBorne(Frontiere& frontiere, unsigned int num_borne, NumJoueur joueur_num){
         frontiere.tuiles[num_borne].revendiquer(joueur_num);
     }
     virtual ~Agent() = default;
@@ -407,6 +360,7 @@ public:
 };
 
 
+
 // classe abstraite permettant de spécifier certaines méthodes et caractéristiques communes aux variantes d'une partie de la première édition
 class Premiere : public Partie{
 public:
@@ -433,10 +387,8 @@ protected:
     static const int NFORCE = FORCEMAX - FORCEMIN + 1;  // 9 forces pour la première édition
     // 9*6 = 54 cartes normales pour la première édition (auxquelles s'ajoutent d'éventuelles cartes tactiques)
     static const int NCARTENORMALE = NCOULEUR * NFORCE;
-    static const int NCARTETACTIQUE = 10;
     int agentActive;  // représente l'agent actif, c'est-à-dire le joueur dont c'est le tour
     Pioche<CarteNormale, NCARTENORMALE> piocheNormale; // pioche de 54 cartes normales (utilisée par les variantes normales et tactique)
-    Pioche<CarteTactique, NCARTETACTIQUE> piocheTactique; // pioche de 10 cartes tactiques
 };
 
 
