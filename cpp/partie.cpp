@@ -240,7 +240,8 @@ void Tuile::revendiquer(NumJoueur num_joueur){
 }
 
 // Méthode permettant de calculer le score du joueur qui a perdu la partie
-unsigned int Frontiere::calculerScore(NumJoueur joueur_num) const{
+template <>
+unsigned int  Frontiere<class Tuile>::calculerScore(NumJoueur joueur_num) const{
     // Pour cela, on compte puis retourne le nombre de bornes revendiquéess par ce joueur.
     unsigned int score = 0;
     for (size_t i = 0; i < nb_tuile; i++){
@@ -252,7 +253,8 @@ unsigned int Frontiere::calculerScore(NumJoueur joueur_num) const{
 
 
 // Méthode permettant de retourner le joueur gagnant ou JoueurGagnant::aucun si aucun joueur n'a gagné à ce stade
-JoueurGagnant Frontiere::estFinie() const{
+template <>
+JoueurGagnant  Frontiere<class Tuile>::estFinie() const{
     unsigned int adjacent = 1;  // compte le nombre de tuiles adjacentes revendiquées par un même joueur
     unsigned int joueur_preced = 0;  // joueur ayant revendiqué la borne précédente
     unsigned int nb_joueur_1 = 0;  // nombre de bornes revendiquées par le joueur 1
@@ -301,7 +303,7 @@ JoueurGagnant Frontiere::estFinie() const{
 }
 
 // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-void Agent:: jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
+void Agent:: jouerCarte( Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
                 Couleur& coul){
     if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
         throw PartieException("La tuile est deja pleine\n");
@@ -314,7 +316,7 @@ void Agent:: jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos
 }
 
 // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
+Movement Agent::choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur joueur_num){
     Movement mvt;  // string permettant d'indiquer les actions à effectuer
     PremiereNormale().ui.afficherFrontiere(f);
     string recup_choix;
@@ -332,7 +334,7 @@ Movement Agent::choisirCarteAJouer(const Frontiere& f, NumJoueur joueur_num){
 }
 
 
-Movement Agent::choisirBornesARevendiquer(Frontiere& f, NumJoueur joueur_num){
+Movement Agent::choisirBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num){
     Movement mvt;
     PremiereNormale().ui.afficherFrontiere(f);
 
@@ -419,7 +421,7 @@ void PremiereNormale::initierPiocheNormale(){
     size_t pos = 0;
     for (auto& c: Couleurs)
         for (auto& f: Forces)
-            piocheNormale.setCarte(pos++, c, f);
+            piocheNormale.setCarteNormale(pos++, c, f);
 }
 
 // Constructeur de la classe PremiereNormale
@@ -507,7 +509,7 @@ void PremiereNormale::initierMains(){
         }
 }
 
-void UI::afficherFrontiere(const Frontiere& f) const{
+void UI::afficherFrontiere(const Frontiere<class Tuile>& f) const{
     Pos nb_tuile = f.nb_tuile;
     cout
             << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
@@ -573,7 +575,7 @@ Pos UI::getChoixCarte(Main& main) {
     return choix_carte;
 }
 
-Pos UI::getChoixBorne(const Frontiere& f, NumJoueur joueur_num) {
+Pos UI::getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num) {
     string recup_choix;
     cout << "Vous pouvez jouer sur les bornes suivantes: \n";
     vector <int> borne_jouable;

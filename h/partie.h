@@ -105,15 +105,14 @@ public:
     size_t getNbCartes() const{ return nbCartes; }
 
     // Méthode permettant d'allouer une nouvelle carte normale de la pioche
-    void setCarte(size_t n, const Couleur& c, const Force& f){
+    void setCarteNormale(size_t n, const Couleur& c, const Force& f){
         cartes[n] = new Carte(c, f);
     }
-/*
-    // Méthode permettant d'allouer une nouvelle carte tactique de la pioche
-    void setCarte(size_t n, const Tactique& tac){
-        cartes[n] = new CarteTactique(tac);
+
+    void setCarteTactique(size_t n,string nom) {
+        cartes[n] = new Carte(nom);
     }
-*/
+
     // Méthode permettant d'échanger deux cartes de la pioche
     void swapCartes(Carte& c1, Carte& c2){
         Carte tmp = c1;
@@ -218,7 +217,7 @@ private:
     TuileRevendiquee revendiquee;  // indique si la tuile est revendiquée (et par quel joueur) ou non
 };
 
-//template<class T>
+template<class T>
 class Frontiere final{  // classe permettant de représenter une frontière
 public:
     Frontiere() = default;
@@ -292,18 +291,19 @@ public:
     }
 
     // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-    virtual Movement choisirCarteAJouer(const Frontiere& frontiere, NumJoueur joueur_num);
+    virtual Movement choisirCarteAJouer(const Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-    virtual void jouerCarte(Frontiere& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
+    virtual void jouerCarte( Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
 
     // Méthode permettant la saisie par l'utilisateur d'une ou plusieurs bornes à revendiquer
-    virtual Movement choisirBornesARevendiquer(Frontiere& frontiere, NumJoueur joueur_num);
+    virtual Movement choisirBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
 
     // Méthode permettant de revendiquer une borne dont le numéro est donné
-    virtual void revendiquerBorne(Frontiere& frontiere, unsigned int num_borne, NumJoueur joueur_num){
+    virtual void revendiquerBorne( Frontiere<class Tuile>& frontiere, unsigned int num_borne, NumJoueur joueur_num){
         frontiere.tuiles[num_borne].revendiquer(joueur_num);
     }
+    Main getMain() const{ return main; }
     virtual ~Agent() = default;
 private:
     friend class UI;
@@ -345,17 +345,17 @@ public:
     virtual Resultat terminer();  // Méthode permettant de calculer et de retourner le score des joueurs à la fin d'une partie
     virtual ~Partie() = default;
 protected:
-    Frontiere frontiere;
+    Frontiere<class Tuile> frontiere;
 };
 
 class UI
 {
 public:
-    virtual void afficherFrontiere(const Frontiere &f) const;
+    virtual void afficherFrontiere(const  Frontiere<class Tuile> &f) const;
     virtual void afficherCote(const Tuile &t, size_t cote) const;
     virtual void afficherEtatBorne(const Tuile &t, size_t num_borne) const;
     virtual Pos getChoixCarte(Main& main);
-    virtual Pos getChoixBorne(const Frontiere& f, NumJoueur joueur_num);
+    virtual Pos getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
 //    virtual Pos getBorneARevendiquer;
 };
 
