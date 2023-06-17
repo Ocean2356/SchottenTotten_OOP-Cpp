@@ -249,7 +249,7 @@ void Jeu::finirJeu() const{
     unsigned int score_max = 0;
     for (size_t i = 0; i < getNbJoueurs(); i++){
         unsigned int score = getScore(i);
-        cout << "Le joueur " << getNom(i) << " a obtenu " << score << "points.\n";
+        cout << "Le joueur " << getNom(i) << " a obtenu " << score << " points.\n";
         if (score_max < score){
             score_max = score;
             joueur_gagnant = i;

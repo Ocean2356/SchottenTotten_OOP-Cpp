@@ -112,11 +112,9 @@ public:
 
     // Méthode permettant d'échanger deux cartes de la pioche
     void swapCartes(Carte& c1, Carte& c2){
-        cout << c1 << c2 << "\n";
         Carte tmp = c1;
         c1 = c2;
         c2 = tmp;
-        cout << c1 << c2 << "\n";
     }
 
     // Méthode permettant de piocher une carte
@@ -128,19 +126,15 @@ public:
             std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
             std::uniform_int_distribution<size_t> distrib{0, nbCartes - 1};
             size_t x = distrib(random_eng);
-            if (x == 7)
-                x = 6;
             // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
-            if (nbCartes - 1 == 7){
-                nbCartes --;
-                return *cartes[0];
-            }
-
+            toString(cartes[x]->getCouleur());
+            toString(cartes[x]->getForce());
             swapCartes(*cartes[x], *cartes[--nbCartes]);
             return *cartes[nbCartes];  // on retourne la carte que l'on vient de "supprimer"
-        }catch(std::exception& e){
-            cout << "Erreur "<< e.what() << " lors de la pioche";
-            return *cartes[0];
+        }catch(PartieException& e){
+            cout << "Erreur "<< e.getInfo() << " lors de la pioche";
+            swapCartes(*cartes[0], *cartes[--nbCartes]);
+            return *cartes[nbCartes];
         }
 
     };
@@ -259,10 +253,11 @@ private:
     NumJoueur rempli_en_premier;  // utilisé dans verif_revendiquable en cas d'égalité parfaite de combinaison
     TuileRevendiquee revendiquee;  // indique si la tuile est revendiquée (et par quel joueur) ou non
     bool verifRevendiquableNonPleine(NumJoueur num_joueur, NumJoueur autre_joueur, Combinaison combinaison, TableauJouee tab) const;
-    bool verifSuiteCouleurPossible(bool meme_couleur, bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
-    bool verifBrelanPossible(bool meme_force, int force_carte_a_jouer, unsigned int somme_joueur_actif, TableauJouee tab) const;
-    bool verifMemeCouleurPossible(bool meme_couleur, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
-    bool verifSuitePossible(bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const;
+    bool verifSuiteCouleurPossible(bool joueur_actif_suite_couleur, bool meme_couleur, bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
+    bool verifBrelanPossible(bool joueur_actif_brelan, bool meme_force, int force_carte_a_jouer, unsigned int somme_joueur_actif, TableauJouee tab) const;
+    bool verifMemeCouleurPossible(bool joueur_actif_meme_couleur, bool meme_couleur, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
+    bool verifSuitePossible(bool joueur_actif_suite, bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const;
+    bool verifSommePossible(unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const;
 };
 
 

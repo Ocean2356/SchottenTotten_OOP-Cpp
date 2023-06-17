@@ -375,7 +375,7 @@ Pos UI::getChoixCarteIa(Main& main) {
     std::uniform_int_distribution<int> distrib{0, (int) main.getNbCartes() - 1};
     auto debug = distrib(random_eng);
     for (Pos i = 0; i < main.getNbCartes(); i++)
-        cout << "Carte " << i << " : " << main.getCarte(i) << "\n";
+        cout << "Carte " << i + 1 << " : " << main.getCarte(i) << "\n";
     cout << "Choix carte ia = " << debug << "\n";
     return (char) debug;
 }
