@@ -240,7 +240,7 @@ private:
     friend class Agent;  // un agent peut accéder aux attributs de la classe tuile, en particulier tuiles
     friend class UI;
     static const unsigned int nb_tuile = 9; // le nombre de tuiles vaut 9 pour la première édition // TODO changer pour pouvoir gérer la deuxième édition (7 tuiles)
-    array<Tuile, nb_tuile> tuiles;  // représente l'ensemble des tuiles
+    array<T, nb_tuile> tuiles;  // représente l'ensemble des tuiles
 };
 
 
@@ -276,6 +276,18 @@ private:
 };
 
 
+class UI
+{
+public:
+    virtual void afficherFrontiere(const  Frontiere<class Tuile> &f) const;
+    virtual void afficherCote(const Tuile &t, size_t cote) const;
+    virtual void afficherEtatBorne(const Tuile &t, size_t num_borne) const;
+    virtual Pos getChoixCarte(Main& main);
+    virtual Pos getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
+//    virtual Pos getBorneARevendiquer;
+};
+
+
 class Agent{  // classe représentant un agent. L'agent peut agir sur la partie (jouer et piocher des cartes, revendiquer des bornes...)
 public:
     Agent() = default;
@@ -306,7 +318,7 @@ public:
     Main getMain() const{ return main; }
     virtual ~Agent() = default;
 private:
-    friend class UI;
+    UI ui = UI();
     Main main;  // un agent a une main
 };
 
@@ -348,18 +360,6 @@ protected:
     Frontiere<class Tuile> frontiere;
 };
 
-class UI
-{
-public:
-    virtual void afficherFrontiere(const  Frontiere<class Tuile> &f) const;
-    virtual void afficherCote(const Tuile &t, size_t cote) const;
-    virtual void afficherEtatBorne(const Tuile &t, size_t num_borne) const;
-    virtual Pos getChoixCarte(Main& main);
-    virtual Pos getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
-//    virtual Pos getBorneARevendiquer;
-};
-
-
 
 // classe abstraite permettant de spécifier certaines méthodes et caractéristiques communes aux variantes d'une partie de la première édition
 class Premiere : public Partie{
@@ -400,7 +400,6 @@ public:
     void jouerTour() override;
     void initierPiocheNormale();  // initialisation de la pioche normale
     ~PremiereNormale() = default;
-    UI ui = UI();
 private:
     static const int NMAIN = 6;  // 6 cartes dans la main dans cette variante
     array<Agent, 2> agents{Agent(NMAIN), Agent(NMAIN)};  // tableau des agents de la partie

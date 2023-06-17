@@ -253,8 +253,8 @@ unsigned int  Frontiere<class Tuile>::calculerScore(NumJoueur joueur_num) const{
 
 
 // Méthode permettant de retourner le joueur gagnant ou JoueurGagnant::aucun si aucun joueur n'a gagné à ce stade
-template <>
-JoueurGagnant  Frontiere<class Tuile>::estFinie() const{
+template <class T>
+JoueurGagnant  Frontiere<T>::estFinie() const{
     unsigned int adjacent = 1;  // compte le nombre de tuiles adjacentes revendiquées par un même joueur
     unsigned int joueur_preced = 0;  // joueur ayant revendiqué la borne précédente
     unsigned int nb_joueur_1 = 0;  // nombre de bornes revendiquées par le joueur 1
@@ -318,14 +318,14 @@ void Agent:: jouerCarte( Frontiere<class Tuile>& frontiere, unsigned int pos_car
 // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
 Movement Agent::choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur joueur_num){
     Movement mvt;  // string permettant d'indiquer les actions à effectuer
-    PremiereNormale().ui.afficherFrontiere(f);
+    ui.afficherFrontiere(f);
     string recup_choix;
     if (main.getNbCartes() > 0){  // s'il reste encore des cartes au joueur
-        Pos choix_carte = PremiereNormale().ui.getChoixCarte(main);
+        Pos choix_carte = ui.getChoixCarte(main);
         mvt += "Carte:";
         mvt += (char) choix_carte;
 
-        Pos choix_borne = PremiereNormale().ui.getChoixBorne(f, joueur_num);
+        Pos choix_borne = ui.getChoixBorne(f, joueur_num);
         if (choix_borne == ERREUR) return "";
         mvt += "Borne:";
         mvt += (char) (choix_borne);
@@ -336,7 +336,7 @@ Movement Agent::choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur j
 
 Movement Agent::choisirBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num){
     Movement mvt;
-    PremiereNormale().ui.afficherFrontiere(f);
+    ui.afficherFrontiere(f);
 
     string choix_revendiquer;
     Pos nb_bornes_a_revendiquer = 0;
