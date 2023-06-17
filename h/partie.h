@@ -106,10 +106,6 @@ public:
         cartes[n] = new Carte(c, f);
     }
 
-    void setCarteTactique(size_t n,string nom) {
-        cartes[n] = new Carte(nom);
-    }
-
     // Méthode permettant d'échanger deux cartes de la pioche
     void swapCartes(Carte& c1, Carte& c2){
         Carte tmp = c1;
@@ -127,6 +123,7 @@ public:
             std::uniform_int_distribution<size_t> distrib{0, nbCartes - 1};
             size_t x = distrib(random_eng);
             // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
+
             toString(cartes[x]->getCouleur());
             toString(cartes[x]->getForce());
             swapCartes(*cartes[x], *cartes[--nbCartes]);
@@ -149,7 +146,7 @@ public:
             delete cartes[i];
         }
     }
-private:
+protected:
     array<Carte*, N> cartes;  // array de N cartes
     size_t nbCartes;  // nombre de cartes piochables
     // vector<Carte> cartesDessous; TODO pour la version tactique (+ mettre une carte aléatoire en dessous de la pioche initialement)
@@ -244,8 +241,7 @@ public:
     virtual void revendiquer(NumJoueur num_joueur);
 
     virtual ~Tuile() = default;
-    void incr_nb_pleine(){ nb_pleine++; }
-private:
+protected:
     friend class UI;
     array<vector<const Carte*>, 2> cartes_posees;  // représente les cartes posées de part et d'autre de la tuile
     //CarteTactique carte_posee_centre;  // A implémenter pour la version tactique
@@ -269,6 +265,7 @@ public:
     Frontiere& operator=(const Frontiere& f) = delete;
     const unsigned int getNbTuile() const{ return nb_tuile; };
     bool verifRevendiquable(size_t i, NumJoueur num_joueur, TableauJouee tab) { return tuiles[i].verifRevendiquable(num_joueur, tab);}
+    bool verifRevendiquable(size_t i, NumJoueur num_joueur) { return tuiles[i].verifRevendiquable(num_joueur);}
     // Méthode permettant de calculer le score du joueur qui a perdu la partie
     unsigned int calculerScore(NumJoueur joueur_num) const;
 
@@ -280,8 +277,10 @@ public:
     ~Frontiere() = default;
 
 private:
-    friend class Agent;  // un agent peut accéder aux attributs de la classe tuile, en particulier tuiles
     friend class UI;
+    friend class UITactique;
+    friend class Agent;  // un agent peut accéder aux attributs de la classe frontiere, en particulier tuiles
+    friend class AgentTactique; // un agent tactique peut accéder aux attributs de la classe frontier, en particulier tuiles
     static const unsigned int nb_tuile = 9; // le nombre de tuiles vaut 9 pour la première édition // TODO changer pour pouvoir gérer la deuxième édition (7 tuiles)
     array<T, nb_tuile> tuiles;  // représente l'ensemble des tuiles
 };

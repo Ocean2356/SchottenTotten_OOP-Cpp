@@ -3,7 +3,7 @@
 #ifndef TACTIQUE_H
 #define TACTIQUE_H
 
-#include "../h/partie.h"
+#include "partie.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +37,7 @@ using Pos = char;
 
 class CarteTactique : public Carte{  // CarteTactique, classe héritant de la classe abstraite carte
 public:
-    CarteTactique(const string& n) : nom(n){}
+    explicit CarteTactique(const string& n) : nom(n){}
     CarteTactique() = default;
     bool estTactique() const override {return true;}
     string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
@@ -51,7 +51,8 @@ public:
     string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
         return nom;
     }
-
+    virtual Couleur getCouleur() const { throw PartieException("Erreur lors de la pioche");}
+    virtual Force getForce() const { throw PartieException("Erreur lors de la pioche");}
     virtual ~CarteTactique() = default;
 private:
     string nom;
@@ -114,15 +115,18 @@ private:
 class CarteCombat;  // Déclaration avancée de la classe CarteCombat
 
 
-class Tuile_tactique :  public Tuile{    // classe Tuile_tactique, héritant de la classe Tuile
+class TuileTactique :  public Tuile{    // classe TuileTactique, héritant de la classe Tuile
 public:
-    Tuile_tactique() : Tuile(), carte_posee_centre(nullptr) {}
-    Tuile_tactique(const Tuile& t) = delete;
-    Tuile_tactique& operator=(const Tuile& t) = delete;
+    TuileTactique() : Tuile(), carte_posee_centre(nullptr) {}
+    TuileTactique(const Tuile& t) = delete;
+    TuileTactique& operator=(const Tuile& t) = delete;
     const CarteTactique* getCartePoseeCentre() const { return carte_posee_centre; }
 
     // Méthode vérifiant si le centre de la tuile est plein
-    bool centrePlein() const{ return (*carte_posee_centre).getNom() != ""; }
+    bool centrePlein() const{ return (*carte_posee_centre).getNom().empty(); }
+
+    // permet de vérifier qu'un joueur peut revendiquer une tuile
+    bool verifRevendiquable(NumJoueur num_joueur);
 
     void placerCarteCentre(const CarteTactique* c){
         if (centrePlein())
@@ -131,9 +135,9 @@ public:
         incr_nb_pleine();
     }
     unsigned int getNbBorne() const { return nb_borne; }
-
+    void incr_nb_pleine(){ nb_pleine++; }
 private:
-    friend class UI_Tactique;
+    friend class UITactique;
     static const unsigned int nb_tuile = 9; // le nombre de tuiles vaut 9 pour la première édition // TODO changer pour pouvoir gérer la deuxième édition (7 tuiles)
     array<Tuile, nb_tuile> tuiles;  // représente l'ensemble des tuiles
     const CarteTactique* carte_posee_centre;  // A implémenter pour la version tactique
@@ -144,13 +148,13 @@ class CarteCombat : public CarteTactique {  // classe Combat, héritant de la cl
 public:
     CarteCombat(const string& nom, Combat c) : CarteTactique(nom), combat(c){};
 
-    void mettre_ColinMaillard(Tuile_tactique* t) const {
+    void mettre_ColinMaillard(TuileTactique* t) const {
         const CarteTactique* carte_tactique = dynamic_cast<const CarteTactique*>(this);
         const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_tactique);
         t->placerCarteCentre(carte_combat);
     }
 
-    void mettre_CombatdeBoue(Tuile_tactique* t) const {
+    void mettre_CombatdeBoue(TuileTactique* t) const {
         const CarteTactique* carte_tactique = dynamic_cast<const CarteTactique*>(this);
         const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_tactique);
         t->placerCarteCentre(carte_combat);
@@ -244,7 +248,7 @@ public:
     virtual void afficherEtatBorne(size_t num_borne) const {
         // Cette méthode est appelée par Frontiere::afficherFrontiere()
         cout << "      ";  // utilisé pour centrer l'affichage
-        Tuile_tactique tuile; // Création d'un objet Tuile_tactique
+        TuileTactique tuile; // Création d'un objet TuileTactique
         const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(tuile.getCartePoseeCentre());
         if (carte_combat != nullptr) {
             carte_combat->afficherCarte();
@@ -262,19 +266,70 @@ public:
     void demande_force(CarteTroupe& carte);
 private:
 };
-class UI_Tactique: public UI
-{
+class UITactique final{
 public:
-    virtual void afficherFrontiere_tactique(const  Frontiere<class Tuile_tactique> &f) const;
-    virtual void afficherCote(const Tuile_tactique &t, size_t cote) const;
-    virtual void afficherEtatBorne(const Tuile_tactique &t, size_t num_borne) const;
-    virtual Pos getChoixCarte(Main& main);
-    virtual Pos getChoixBorne(const Frontiere<class Tuile_tactique>& f, NumJoueur joueur_num);
-//    virtual Pos getBorneARevendiquer;
+    void afficherFrontiere_tactique(const Frontiere<class TuileTactique> &f) const;
+    void afficherCote(const TuileTactique &t, size_t cote) const;
+    void afficherEtatBorne(const TuileTactique &t, size_t num_borne) const;
+    Pos getChoixCarte(Main& main);
+    Pos getChoixBorne(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
+    Movement getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
+    Movement getChoixBornesARevendiquer( Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
 };
 
-// classe correspondant à la variante Tactique de la première édition de Schotten-Totten
+class AgentTactique final: public Agent{
+public:
+    AgentTactique() = default;
+    AgentTactique(size_t taille_main) : main(Main(taille_main)){}
+    AgentTactique(const AgentTactique&) = default;
+    AgentTactique& operator=(const AgentTactique&) = default;
+
+
+    // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
+    Movement choisirCarteAJouer(const Frontiere<class TuileTactique>& frontiere, NumJoueur joueur_num);
+
+    // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
+    void jouerCarte(Frontiere<class TuileTactique>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, string nom_carte);
+
+    // Méthode permettant la saisie par l'utilisateur d'une ou plusieurs bornes à revendiquer
+    Movement choisirBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
+
+    // Méthode permettant de revendiquer une borne dont le numéro est donné
+    void revendiquerBorne(Frontiere<class TuileTactique>& frontiere, unsigned int num_borne, NumJoueur joueur_num){
+        frontiere.tuiles[num_borne].revendiquer(joueur_num);
+    }
+
+    ~AgentTactique() = default;
+private:
+    UITactique ui_tactique;
+    Main main;  // un agent a une main
+};
+
 template<class Carte, size_t N>
+class PiocheTactique final: public Pioche<class CarteTactique, N>{
+public:
+    PiocheTactique(): Pioche<class CarteTactique, N>() {}
+
+    // Méthode permettant de piocher une carte
+    const CarteTactique& piocher() override{
+        if (this->estVide())
+            throw PartieException("La pioche est vide");
+        // Génération d'un nombre aléatoire entre 0 et nbCartes - 1 (pour piocher une des cartes piochable de la pioche)
+        std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+        std::uniform_int_distribution<size_t> distrib{0, this->nbCartes - 1};
+        size_t x = distrib(random_eng);
+        // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
+        this->swapCartes(*this->cartes[x], *this->cartes[--this->nbCartes]);
+        return *this->cartes[this->nbCartes];  // on retourne la carte que l'on vient de "supprimer"
+    }
+
+    void setCarteTactique(size_t n,string nom) {
+        this->cartes[n] = new CarteTactique(nom);
+    }
+};
+
+
+// classe correspondant à la variante Tactique de la première édition de Schotten-Totten
 class PremiereTactique final: public Premiere{
 public:
     PremiereTactique();
@@ -282,55 +337,19 @@ public:
     void jouerTour() override;
     void initierPiocheTactique();  // initialisation de la pioche tactique
     ~PremiereTactique() = default;
-    void setCarteTactique(size_t n, string nom) {
+    void setCarteTactique(size_t n, string& nom) {
         piocheTactique.setCarteTactique(n, nom);
     }
-
-    UI_Tactique ui_tactique = UI_Tactique();
 private:
-    friend class UI_Tactique;
-    Frontiere<Tuile_tactique> frontiere_tactique;
+    Frontiere<TuileTactique> frontiere_tactique;
     static const int NMAIN = 7;  // 7 cartes dans la main dans cette variante
     static const int NCARTETACTIQUE = 10;
-    Pioche<CarteTactique, NCARTETACTIQUE> piocheTactique;
-    array<Agent, 2> agents{Agent(NMAIN), Agent(NMAIN)};  // tableau des agents de la partie
+    PiocheTactique<CarteTactique, NCARTETACTIQUE> piocheTactique;
+    array<AgentTactique, 2> agents{AgentTactique(NMAIN), AgentTactique(NMAIN)};  // tableau des agents de la partie
     // Méthode permettant d'initialiser les agents (appelée par la méthode Premiere::commencer)
     void initierAgents(Ordre ordre) override;
     // Méthode permettant d'initialiser les mains (appelée par la méthode Premiere::commencer)
     void initierMains() override;
 };
-
-class Agent_tactique final: public Agent{
-public:
-    Agent_tactique() = default;
-    Agent_tactique(size_t taille_main) : main(Main(taille_main)){}
-    Agent_tactique(const Agent_tactique& a) = default;
-    Agent_tactique& operator=(const Agent_tactique& a) = default;
-
-    // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-    Movement choisirCarteAJouer(const Frontiere<class Tuile_tactique>& frontiere, NumJoueur joueur_num);
-
-    // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-    void jouerCarte(Frontiere<class Tuile_tactique>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, string nom_carte);
-
-    // Méthode permettant la saisie par l'utilisateur d'une ou plusieurs bornes à revendiquer
-    Movement choisirBornesARevendiquer(Frontiere<class Tuile_tactique>& frontiere, NumJoueur joueur_num)override;
-
-    // Méthode permettant de revendiquer une borne dont le numéro est donné
-    void revendiquerBorne(Frontiere<class Tuile_tactique>& frontiere, unsigned int num_borne, NumJoueur joueur_num) override{
-        frontiere.tuiles[num_borne].revendiquer(joueur_num);
-    }
-
-
-
-    ~Agent_tactique() = default;
-private:
-    friend class UI_Tactique;
-    Main main;  // un agent a une main
-
-
-};
-
-
 
 #endif //TACTIQUE_H
