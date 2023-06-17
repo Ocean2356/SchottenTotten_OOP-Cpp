@@ -253,10 +253,10 @@ private:
     NumJoueur rempli_en_premier;  // utilisé dans verif_revendiquable en cas d'égalité parfaite de combinaison
     TuileRevendiquee revendiquee;  // indique si la tuile est revendiquée (et par quel joueur) ou non
     bool verifRevendiquableNonPleine(NumJoueur num_joueur, NumJoueur autre_joueur, Combinaison combinaison, TableauJouee tab) const;
-    bool verifSuiteCouleurPossible(bool joueur_actif_suite_couleur, bool meme_couleur, bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
+    bool verifSuiteCouleurPossible(bool joueur_actif_suite_couleur, bool meme_couleur, bool suite, int force_max, int force_min, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
     bool verifBrelanPossible(bool joueur_actif_brelan, bool meme_force, int force_carte_a_jouer, unsigned int somme_joueur_actif, TableauJouee tab) const;
     bool verifMemeCouleurPossible(bool joueur_actif_meme_couleur, bool meme_couleur, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
-    bool verifSuitePossible(bool joueur_actif_suite, bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const;
+    bool verifSuitePossible(bool joueur_actif_suite, bool suite, int force_max, int force_min, unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const;
     bool verifSommePossible(unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const;
 };
 

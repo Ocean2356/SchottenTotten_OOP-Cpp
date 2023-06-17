@@ -115,29 +115,34 @@ int max(int a, int b){
     return a;
 }
 
-bool Tuile::verifSuiteCouleurPossible(bool joueur_actif_suite_couleur, bool meme_couleur, bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const{
-    int force_carte_a_jouer;
+bool Tuile::verifSuiteCouleurPossible(bool joueur_actif_suite_couleur, bool meme_couleur, bool suite, int force_max, int force_min, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const{
     if (!meme_couleur || !suite) // l'autre joueur ne pourra jamais faire de suite couleur
         return false;
 
-    if (force_max == 9){
-        // puisqu'il y a une suite, l'autre joueur aura au mieux, un 9, un 8 et un 7
-        somme += 7;
-        force_carte_a_jouer = 7;
+    int force_possible_1;
+    int force_possible_2 = -1;
+    if (force_max == force_min + 1){  // au plus deux forces possibles pour compléter la suite
+        if (force_min > 1){
+            force_possible_1 = force_min - 1;
+            if (force_max < 9)
+                force_possible_2 = force_max + 1;
+        }
+        else  // une seule force possible
+            force_possible_1 = force_max + 1;
     }
-    else{
-        somme += force_max + 1;
-        force_carte_a_jouer = force_max + 1;
-    }
+    else
+        force_possible_1 = force_min + 1;  // la force restante pour la suite se situe entre les deux premières
+    somme += force_possible_1;  // on ne considère pas le cas de force_possible 2 pour simplifier
+
     if (somme_joueur_actif >= somme && joueur_actif_suite_couleur)  // l'autre joueur ne pourra pas battre la somme
         // Rappel : en cas d'égalité des combinaisons, le joueur qui remplit la borne en premier l'emporte
         return false;
 
     // Il reste à regarder si l'autre joueur peut faire la combinaison gagnante
-    if (tab[couleur_carte_a_jouer][force_carte_a_jouer])
-        // la carte à jouer est déjà jouée, l'autre joueur ne pourra pas l'emporter
-        return false;
-    return true;  // l'autre joueur peut encore jouer cette carte
+    if (!tab[couleur_carte_a_jouer][force_possible_1] || (force_possible_2 != -1 && !tab[couleur_carte_a_jouer][force_possible_2]))
+        // la combinaison suite couleur est possible
+        return true;
+    return false;  // la combinaison suite couleur est impossible
 }
 
 
@@ -169,33 +174,38 @@ bool Tuile::verifMemeCouleurPossible(bool joueur_actif_meme_couleur, bool meme_c
     return (max_force_jouable != -1) && (((max_force_jouable + 1 + somme) > somme_joueur_actif) || !joueur_actif_meme_couleur);
 }
 
-bool Tuile::verifSuitePossible(bool joueur_actif_suite,bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const{
+bool Tuile::verifSuitePossible(bool joueur_actif_suite, bool suite, int force_max, int force_min, unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const{
         int force_carte_a_jouer;
         if (!suite) // l'autre joueur ne pourra jamais faire de suite
             return false;
+        int force_possible_1;
+        int force_possible_2 = -1;
+        if (force_max == force_min + 1){  // au plus deux forces possibles pour compléter la suite
+            if (force_min > 1){
+                force_possible_1 = force_min - 1;
+                if (force_max < 9)
+                    force_possible_2 = force_max + 1;
+            }
+            else  // une seule force possible
+                force_possible_1 = force_max + 1;
+        }
+        else
+            force_possible_1 = force_min + 1;  // la force restante pour la suite se situe entre les deux premières
+        somme += force_possible_1;  // on ne considère pas le cas de force_possible 2 pour simplifier
 
-        if (force_max == 9){
-            // puisqu'il y a une suite, l'autre joueur aura au mieux, un 9, un 8 et un 7
-            somme += 7;
-            force_carte_a_jouer = 7;
-        }
-        else{
-            somme += force_max + 1;
-            force_carte_a_jouer = force_max + 1;
-        }
         if (somme_joueur_actif >= somme && joueur_actif_suite)  // l'autre joueur ne pourra pas battre la somme
         // Rappel : en cas d'égalité des combinaisons, le joueur qui remplit la borne en premier l'emporte
             return false;
 
         // Il reste à regarder si l'autre joueur peut faire la combinaison gagnante
         for (Pos i=0; i<6; i++)
-            if (!tab[i][force_carte_a_jouer]) {
+            if (!tab[i][force_possible_1] || (force_possible_2 != -1 && !tab[i][force_possible_2])){
                 // Il reste au moins une carte jouable pour compléter les cartes de la même suite
                 return true;
             }
         // la carte à jouer est déjà jouée, l'autre joueur ne pourra pas l'emporter
         return false;
-};
+}
 
 
 bool Tuile::verifSommePossible(unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const{
@@ -216,12 +226,14 @@ bool Tuile::verifSommePossible(unsigned int somme, unsigned int somme_joueur_act
 }
 
 bool Tuile::verifRevendiquableNonPleine(NumJoueur num_joueur, NumJoueur autre_joueur, Combinaison combinaison, TableauJouee tab) const{
-    unsigned int nb_cartes_posees_autre_joueur = cartes_posees[(int) num_joueur].size();
+    unsigned int nb_cartes_posees_autre_joueur = cartes_posees[(int) autre_joueur].size();
     unsigned int somme_joueur_actif = getSomme(num_joueur);
     if (nb_cartes_posees_autre_joueur == 0){
+        // il faudrait faire de nombreuses vérifications, on ne l'a pas fait par manque de temps
         return false;
     }
     if (nb_cartes_posees_autre_joueur == 1){
+        // Il faudrait faire de nombreuses vérifications, on ne l'a pas fait par manque de temps
         return false;
     }
     if (nb_cartes_posees_autre_joueur == 2){
@@ -235,7 +247,7 @@ bool Tuile::verifRevendiquableNonPleine(NumJoueur num_joueur, NumJoueur autre_jo
             // La première carte n'est pas une CarteNormale, impossible pour cette variante
             throw PartieException("Erreur, la carte devrait être une carte Normale");
         }
-        auto premiereCarteJoueurActif = dynamic_cast<const CarteNormale*>(cartes_posees[(int) autre_joueur][0]);
+        auto premiereCarteJoueurActif = dynamic_cast<const CarteNormale*>(cartes_posees[(int) num_joueur][0]);
         if (premiereCarteJoueurActif == nullptr) {
             // La première carte n'est pas une CarteNormale, impossible pour cette variante
             throw PartieException("Erreur, la carte devrait être une carte Normale");
@@ -245,43 +257,45 @@ bool Tuile::verifRevendiquableNonPleine(NumJoueur num_joueur, NumJoueur autre_jo
         bool meme_couleur = premiereCarte->getCouleur() == deuxiemeCarte->getCouleur();
         bool meme_force = premiereCarte->getForce() == deuxiemeCarte->getForce();
         bool suite = ((int)premiereCarte->getForce() == (int)deuxiemeCarte->getForce() + 1) || ((int) premiereCarte->getForce() + 1 == (int)deuxiemeCarte->getForce());
+        suite = suite || ((int)premiereCarte->getForce() == (int)deuxiemeCarte->getForce() + 2) || ((int) premiereCarte->getForce() + 2 == (int)deuxiemeCarte->getForce());
         int force_max = max((int)premiereCarte->getForce(), (int)deuxiemeCarte->getForce());
+        int force_min = min((int)premiereCarte->getForce(), (int)deuxiemeCarte->getForce());
         auto somme = (unsigned int)premiereCarte->getForce() + (unsigned int)deuxiemeCarte->getForce();
         int couleur_carte_a_jouer = (int) premiereCarte->getCouleur();
         int force_carte_a_jouer = (int) premiereCarte->getForce();
 
         if (combinaison == Combinaison::suite_couleur){
             // si l'autre joueur peut faire une meilleure suite couleur, il l'emporte
-            return !verifSuiteCouleurPossible(true, meme_couleur, suite, force_max, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
+            return !verifSuiteCouleurPossible(true, meme_couleur, suite, force_max, force_min, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
         }
         if (combinaison == Combinaison::brelan) {
             // si l'autre joueur peut faire une suite couleur ou un meilleur brelan, il l'emporte
-            bool suiteCouleurPossible = verifSuiteCouleurPossible(false, meme_couleur, suite, force_max, somme,
+            bool suiteCouleurPossible = verifSuiteCouleurPossible(false, meme_couleur, suite, force_max, force_min, somme,
                                                                   somme_joueur_actif, couleur_carte_a_jouer, tab);
             bool brelanPossible = verifBrelanPossible(true, meme_force, force_carte_a_jouer, somme_joueur_actif, tab);
             return !(suiteCouleurPossible || brelanPossible);
         }
         if (combinaison == Combinaison::couleur){
             // si l'autre joueur peut faire une suite couleur ou un brelan ou une meilleure combinaison couleur, il l'emporte
-            bool suiteCouleurPossible = verifSuiteCouleurPossible(false, meme_couleur, suite, force_max, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
+            bool suiteCouleurPossible = verifSuiteCouleurPossible(false, meme_couleur, suite, force_max, force_min, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
             bool brelanPossible = verifBrelanPossible(false, meme_force, force_carte_a_jouer, somme_joueur_actif, tab);
             bool memeCouleurPossible = verifMemeCouleurPossible(true, meme_couleur, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
             return !(suiteCouleurPossible || brelanPossible || memeCouleurPossible);
         }
         if (combinaison == Combinaison::suite){
             // si l'autre joueur peut faire une suite couleur ou un brelan ou une combinaison couleur ou une meilleure suite, il l'emporte
-            bool suiteCouleurPossible = verifSuiteCouleurPossible(false,meme_couleur, suite, force_max, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
+            bool suiteCouleurPossible = verifSuiteCouleurPossible(false,meme_couleur, suite, force_max, force_min, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
             bool brelanPossible = verifBrelanPossible(false, meme_force, force_carte_a_jouer, somme_joueur_actif, tab);
             bool memeCouleurPossible = verifMemeCouleurPossible(false, meme_couleur, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
-            bool suitePossible = verifSuitePossible(true, suite, force_max, somme, somme_joueur_actif, tab);
+            bool suitePossible = verifSuitePossible(true, suite, force_max, force_min, somme, somme_joueur_actif, tab);
             return !(suiteCouleurPossible || brelanPossible || memeCouleurPossible || suitePossible);
         }
         if (combinaison == Combinaison::somme){
             // si l'autre joueur peut faire une meilleure combinaison que somme ou obtenir une meilleure somme, il l'emporte
-            bool suiteCouleurPossible = verifSuiteCouleurPossible(false, meme_couleur, suite, force_max, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
+            bool suiteCouleurPossible = verifSuiteCouleurPossible(false, meme_couleur, suite, force_max, force_min, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
             bool brelanPossible = verifBrelanPossible(false, meme_force, force_carte_a_jouer, somme_joueur_actif, tab);
             bool memeCouleurPossible = verifMemeCouleurPossible(false, meme_couleur, somme, somme_joueur_actif, couleur_carte_a_jouer, tab);
-            bool suitePossible = verifSuitePossible(false, suite, force_max, somme, somme_joueur_actif, tab);
+            bool suitePossible = verifSuitePossible(false, suite, force_max, force_min, somme, somme_joueur_actif, tab);
             bool sommePossible = verifSommePossible(somme, somme_joueur_actif, tab);
             return !(suiteCouleurPossible || brelanPossible || memeCouleurPossible || suitePossible || sommePossible);
         }
