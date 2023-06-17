@@ -2,7 +2,7 @@
 Nom : partie.cpp
 Auteurs : Ines Abbache, Sehrish Shakeel, Haiyang Ma et Eliott Sebbagh
 Description : Fichier cpp utilisé dans le cadre du projet P23 de l'UV LO21. Il contient les définitions des fonctions
-et méthodes déclarées mais non définies dans partie.h
+et méthodes déclarées mais non définies dans partie.h (sauf pour la classe Tuile)
 ***********************************************************************************************************************/
 
 
@@ -65,250 +65,13 @@ std::ostream& operator<<(std::ostream& f, const Carte& c){
     return f;
 }
 
-// Méthode permettant de vérifier que toutes les cartes d'un côté de la tuile ont la même couleur
-bool Tuile::verifMemeCouleur(NumJoueur num_joueur) const{
-    const Carte* premiereCarte = cartes_posees[static_cast<int>(num_joueur)][0];
-    const CarteNormale* premiereCarteNormale = dynamic_cast<const CarteNormale*>(premiereCarte);
-    if (premiereCarteNormale == nullptr) {
-        // La première carte n'est pas une CarteNormale, on considère donc qu'elles n'ont pas la même couleur
-        return false;
-    }
-    Couleur couleur = premiereCarteNormale->getCouleur();
-    for (size_t i = 1; i < nb_pleine; i++) {
-        const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
-        const CarteNormale* carteNormale = dynamic_cast<const CarteNormale*>(carte);
-        if (carteNormale == nullptr || carteNormale->getCouleur() != couleur) {
-            // La carte n'est pas une CarteNormale ou sa couleur est différente
-            return false;
-        }
-    }
-    return true;
-}
-
-// Méthode permettant de vérifier que toutes les cartes d'un côté de la tuile ont la même force
-bool Tuile::verifMemeForce(NumJoueur num_joueur) const{
-    const Carte* premiereCarte = cartes_posees[static_cast<int>(num_joueur)][0];
-    const CarteNormale* premiereCarteNormale = dynamic_cast<const CarteNormale*>(premiereCarte);
-    if (premiereCarteNormale == nullptr) {
-        // La première carte n'est pas une CarteNormale, on considère donc qu'elles n'ont pas la même force
-        return false;
-    }
-    Force force = premiereCarteNormale->getForce();
-    for (size_t i = 1; i < nb_pleine; i++) {
-        const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
-        const CarteNormale* carteNormale = dynamic_cast<const CarteNormale*>(carte);
-        if (carteNormale == nullptr || carteNormale->getForce() != force) {
-            // La carte n'est pas une CarteNormale ou sa force est différente
-            return false;
-        }
-    }
-    return true;
-}
-
-// Méthode appelée par verifSuite permettant de trier les cartes en fonction de la force d'un côté de la tuile
-void Tuile::ordonnerCartes(NumJoueur num_joueur){
-    // on utilise ici un tri à bulle. Ce tri n'est pas le plus optimisé, mais il est simple et largement suffisant
-    // en effet, dans ce cas, il y a au maximum 4 cartes d'un côté de la frontière. Le coût du tri est donc faible
-    bool modif;  // on arrête le parcours lorsque plus aucune modification n'a été effectuée
-    do {
-        modif = false;
-        for (size_t i = 0; i < nb_pleine - 1; i++) {
-            const Carte* carte1 = cartes_posees[static_cast<int>(num_joueur)][i];
-            const Carte* carte2 = cartes_posees[static_cast<int>(num_joueur)][i + 1];
-            const CarteNormale* carteNormale1 = dynamic_cast<const CarteNormale*>(carte1);
-            const CarteNormale* carteNormale2 = dynamic_cast<const CarteNormale*>(carte2);
-            if (carteNormale1 != nullptr && carteNormale2 != nullptr &&
-                carteNormale1->getForce() > carteNormale2->getForce()) {
-                std::swap(cartes_posees[static_cast<int>(num_joueur)][i],
-                          cartes_posees[static_cast<int>(num_joueur)][i + 1]);
-                modif = true;
-            }
-        }
-    } while (modif);
-}
-
-
-// Méthode permettant de vérifier que les cartes d'un côté de la tuile forment une suite
-bool Tuile::verifSuite(NumJoueur num_joueur){
-        ordonnerCartes(num_joueur);  // on trie les cartes de ce côté de la tuile
-
-        std::vector<const CarteNormale*> cartes_normales;
-        cartes_normales.reserve(nb_pleine);
-
-        for (size_t i = 0; i < nb_pleine; i++) {
-            const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
-            const CarteNormale* carte_normale = dynamic_cast<const CarteNormale*>(carte);
-            if (carte_normale != nullptr) {
-                cartes_normales.push_back(carte_normale);
-            }
-        }
-
-        for (size_t i = 0; i < cartes_normales.size() - 1; i++) {
-            if (static_cast<int>(cartes_normales[i]->getForce()) + 1 != static_cast<int>(cartes_normales[i + 1]->getForce())) {
-                return false; // on a trouvé deux forces qui ne se suivaient pas
-            }
-        }
-        return true;
-    }
-
-
-
-// Méthode permettant de sommer la force de toutes les cartes d'un côté de la tuile
-unsigned int Tuile::getSomme(NumJoueur num_joueur) const {
-    unsigned int somme = 0;
-    for (size_t i = 0; i < nb_pleine; i++) {
-        const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];
-        const CarteNormale* carteNormale = dynamic_cast<const CarteNormale*>(carte);
-        if (carteNormale != nullptr) {
-            somme += static_cast<unsigned int>(carteNormale->getForce());
-        }
-    }
-    return somme;
-}
-
-
-
-// Méthode permettant de vérifier qu'un joueur peut revendiquer une tuile
-bool Tuile::verifRevendiquable(NumJoueur num_joueur) {
-    // si la tuile est déjà revendiquée, elle n'est pas revendiquable
-    if (estRevendiquee())
-        return false;
-
-    // si le côté du joueur qui a demandé à revendiquer la borne n'est pas plein, il ne peut pas revendiquer la borne
-    if (!cotePlein(num_joueur))
-        return false;
-
-    // Détermination de la combinaison du joueur qui souhaite revendiquer la tuile
-    Combinaison joueur1 = determinerCombinaison(num_joueur);
-
-    // on récupère le numéro de l'autre joueur (celui qui n'a pas demandé à revendiquer la borne)
-    auto autre_joueur = (NumJoueur) (((int) num_joueur + 1) % 2);
-    if (cartes_posees[(int) autre_joueur].size() != nb_pleine) {
-        // TODO, verifier si l'on peut revendiquer une tuile non encore remplie (pour l'instant on considère que non)
-        // on utilisera pour cela le tableau des cartes déjà jouées.
-        return false;
-    } else{
-        // Détermination de la combinaison de l'autre joueur
-        Combinaison joueur2 = determinerCombinaison(autre_joueur);
-
-        if ((int) joueur1 > (int) joueur2)
-            // le joueur qui souhaite revendiquer la tuile a la meilleure combinaison
-            return true;
-        else if ((int) joueur1 == (int) joueur2) { // les deux joueurs ont la même combinaison
-            unsigned int somme1 = getSomme(num_joueur);
-            unsigned int somme2 = getSomme(autre_joueur);
-            if (somme1 > somme2)
-                // le joueur qui souhaite revendiquer la tuile peut le faire
-                return true;
-            else if (somme1 == somme2)  // le joueur qui a rempli la tuile en premier peut la revendiquer
-                return rempli_en_premier == num_joueur;
-            else
-                // le joueur qui souhaite revendiquer la tuile ne peut pas le faire
-                return false;
-        } else  // l'autre joueur a la meilleure combinaison
-            return false;
-    }
-}
-
-Combinaison Tuile::determinerCombinaison(NumJoueur num_joueur){
-    if (verifMemeCouleur(num_joueur))
-        if (verifSuite(num_joueur))
-            // meilleure combinaison possible (trois cartes de la même couleur qui se suivent
-            return Combinaison::suite_couleur;
-        else
-            // trois cartes de la même couleur, troisième meilleure combinaison
-            return Combinaison::couleur;
-    else if (verifMemeForce(num_joueur))
-        // trois cartes de la même force, deuxième meilleure combinaison
-        return Combinaison::brelan;
-    else if (verifSuite(num_joueur))
-        // trois cartes qui se suivent, mais pas de la même couleur, quatrième meilleure combinaison
-        return Combinaison::suite;
-    else
-        // moins bonne combinaison, la somme
-        return Combinaison::somme;
-}
-
-// Méthode permettant de revendiquer une tuile pour un joueur
-void Tuile::revendiquer(NumJoueur num_joueur){
-    if (!verifRevendiquable(num_joueur))
-        throw PartieException("La tuile n'est pas revendiquable par ce joueur");
-    if (num_joueur == NumJoueur::joueur1)
-        revendiquee = TuileRevendiquee::revendiquee_joueur1;
-    else
-        revendiquee = TuileRevendiquee::revendiquee_joueur2;
-}
-
-// Méthode permettant de calculer le score du joueur qui a perdu la partie
-template <class T>
-unsigned int Frontiere<T>::calculerScore(NumJoueur joueur_num) const{
-    // Pour cela, on compte puis retourne le nombre de bornes revendiquéess par ce joueur.
-    unsigned int score = 0;
-    for (size_t i = 0; i < nb_tuile; i++){
-        if ((int) tuiles[i].getRevendiquee() == (int) joueur_num + 1)
-            score++;
-    }
-    return score;
-}
-
-
-// Méthode permettant de retourner le joueur gagnant ou JoueurGagnant::aucun si aucun joueur n'a gagné à ce stade
-template <class T>
-JoueurGagnant Frontiere<T>::estFinie() const{
-    unsigned int adjacent = 1;  // compte le nombre de tuiles adjacentes revendiquées par un même joueur
-    unsigned int joueur_preced = 0;  // joueur ayant revendiqué la borne précédente
-    unsigned int nb_joueur_1 = 0;  // nombre de bornes revendiquées par le joueur 1
-    unsigned int nb_joueur_2 = 0;  // nombre de bornes revendiquées par le joueur 2
-
-    for (size_t i = 0; i < nb_tuile; i++){
-        TuileRevendiquee num_joueur = tuiles[i].getRevendiquee();
-        if (num_joueur == TuileRevendiquee::revendiquee_joueur1){  // le joueur 1 a revendiqué la tuile
-            if (joueur_preced == 1){  // le joueur 1 a également revendiqué la tuile précédente
-                adjacent++;
-                if (adjacent == 3)
-                    // 3 tuiles adjacentes revendiquées par le joueur 1, il l'emporte
-                    return JoueurGagnant::joueur1;
-            } else
-                // le joueur 1 n'a pas revendiqué la tuile précédente
-                adjacent = 1;
-            nb_joueur_1++;
-
-            if (nb_joueur_1 == 5)
-                // 5 tuiles revendiquées par le joueur 1, il l'emporte
-                return JoueurGagnant::joueur1;
-            joueur_preced = 1;
-        } else if (num_joueur == TuileRevendiquee::revendiquee_joueur2){  // le joueur 2 a revendiqué la tuile
-            if (joueur_preced == 2){  // le joueur 2 a également revendiqué la tuile précédente
-                adjacent++;
-                if (adjacent == 3)
-                    // 3 tuiles adjacentes revendiquées par le joueur 2, il l'emporte
-                    return JoueurGagnant::joueur2;
-            } else
-                // le joueur 2 n'a pas revendiqué la tuile précédente
-                adjacent = 1;
-            nb_joueur_2++;
-
-            if (nb_joueur_2 == 5)
-                // 5 tuiles revendiquées par le joueur 2, il l'emporte
-                return JoueurGagnant::joueur2;
-            joueur_preced = 2;
-        } else{  // Tuile non revendiquee
-            joueur_preced = 0;
-            adjacent = 1;
-        }
-    }
-    // On a parcouru toutes les tuiles sans trouver trois tuiles adjacentes revendiquées par un même joueur
-    // ni 5 tuiles revendiquées par un même joueur. La partie n'est donc pas encore terminée
-    return JoueurGagnant::aucun;
-}
-
 // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
 void Agent::jouerCarte(Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
                 Couleur& coul){
     if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
         throw PartieException("La tuile est deja pleine\n");
     const Carte& c = main.jouerCarte(pos_carte);  // on récupère la carte à jouer
-    const CarteNormale& carteNormale = dynamic_cast<const CarteNormale&>(c);
+    auto carteNormale = dynamic_cast<const CarteNormale&>(c);
     f = carteNormale.getForce();// f est utilisée pour mettre à jour le tableau des cartes jouées
     coul = carteNormale.getCouleur();// coul est utilisée pour mettre à jour le tableau des cartes jouées
     frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);  // on place la carte sur la frontière
@@ -340,14 +103,14 @@ Movement Agent::choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur j
 }
 
 
-Movement Agent::choisirBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num){
+Movement Agent::choisirBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num, TableauJouee tab){
     if (this->getIa())
-        return ui.getChoixBornesARevendiquerIa(f, joueur_num);
+        return ui.getChoixBornesARevendiquerIa(f, joueur_num, tab);
     else
-        return ui.getChoixBornesARevendiquer(f, joueur_num);
+        return ui.getChoixBornesARevendiquer(f, joueur_num, tab);
 }
 
-Movement UI::getChoixBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num){
+Movement UI::getChoixBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num, TableauJouee tab){
     Movement mvt;
     afficherFrontiere(f);
 
@@ -372,7 +135,7 @@ Movement UI::getChoixBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur jo
                 if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9)
                     choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
             }
-            if (f.verifRevendiquable(choix_borne_a_revendiquer - 1, joueur_num)){
+            if (f.verifRevendiquable(choix_borne_a_revendiquer - 1, joueur_num, tab)){
                 // Si la tuile est revendiquable par le joueur
                 bool saisie_incorrecte = false;
                 for (auto& b : bornes_a_revendiquer)
@@ -411,12 +174,12 @@ Movement UI::getChoixBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur jo
 }
 
 
-Movement UI::getChoixBornesARevendiquerIa( Frontiere<class Tuile>& f, NumJoueur joueur_num){
+Movement UI::getChoixBornesARevendiquerIa( Frontiere<class Tuile>& f, NumJoueur joueur_num, TableauJouee tab){
     Movement mvt;
     Pos nb_bornes_a_revendiquer = 0;
 
     for (Pos i = 0; i<f.getNbTuile(); i++)
-        if (f.verifRevendiquable((size_t) i, joueur_num)){
+        if (f.verifRevendiquable((size_t) i, joueur_num, tab)){
             // Si la tuile est revendiquable par le joueur
             mvt += "Revendiquer:";
             mvt += i;
@@ -453,6 +216,7 @@ void PremiereNormale::initierPiocheNormale(){
     for (auto& c: Couleurs)
         for (auto& f: Forces)
             piocheNormale.setCarteNormale(pos++, c, f);
+
 }
 
 // Constructeur de la classe PremiereNormale
@@ -479,7 +243,7 @@ void PremiereNormale::jouerTour(){
         // pas de carte à jouer, on force le joueur à revendiquer toutes les bornes possibles
         // pour éviter que la partie ne s'arrête jamais
         for (size_t i=0; i<frontiere.getNbTuile(); i++){
-            if (frontiere.verifRevendiquable(i, (NumJoueur) agentActive))
+            if (frontiere.verifRevendiquable(i, (NumJoueur) agentActive, tableauJouee))
                 agent.revendiquerBorne(frontiere, i, (NumJoueur) agentActive);
         }
 
@@ -497,7 +261,7 @@ void PremiereNormale::jouerTour(){
     }
 
 
-    Movement bornes_a_revendiquer = agent.choisirBornesARevendiquer(frontiere, (NumJoueur) agentActive);
+    Movement bornes_a_revendiquer = agent.choisirBornesARevendiquer(frontiere, (NumJoueur) agentActive, tableauJouee);
     // Revendiquer les bornes
     size_t pos_nb_revendiquer = bornes_a_revendiquer.find("nb:");
     if (pos_nb_revendiquer != std::string::npos){  // si on a trouvé le nombre de bornes

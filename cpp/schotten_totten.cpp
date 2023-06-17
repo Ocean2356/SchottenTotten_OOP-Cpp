@@ -204,7 +204,7 @@ void Jeu::jouerPartie(Edition edition, Variante variante){
     // déroulement de la partie tour par tour jusqu'à ce que la partie soit terminée
     while (!partie->testerFin()) {
         partie->jouerTour();
-        if (this->only_ia_players) {
+        if (only_ia_players) {
             string attente;
             cout << "Appuyez sur entree pour continuer: ";
             getline(cin, attente);

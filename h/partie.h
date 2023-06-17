@@ -17,9 +17,13 @@ représentant les cartes, la pioche, la main, les tuiles, la frontière, les age
 #include <chrono>
 
 class Joueur;
+class Tuile;
 
 enum class Tactique{Troupe, Combat, Ruse};
-
+enum class JoueurGagnant{aucun, joueur1, joueur2};
+enum class NumJoueur{joueur1, joueur2};
+enum class Combinaison{somme, suite, couleur, brelan, suite_couleur};
+enum class TuileRevendiquee{non_revendiquee, revendiquee_joueur1, revendiquee_joueur2};
 
 using namespace std;
 using Ordre = array<Joueur*  , 2>; // ordre des joueurs qui jouent
@@ -27,13 +31,8 @@ using Resultat = array<unsigned int, 2>; // score des joueurs à la fin d'une pa
 using Movement = string; // string représentant une action à effectuer (jouer telle carte sur telle borne, revendiquer telle borne...)
 using Pos = char;
 const Pos ERREUR = -1;
+using TableauJouee = array<array<bool, 9>, 6>;
 
-// utilisé pour stocker, pour chaque tuile, si elle a été revendiquée et par quel joueur
-enum class TuileRevendiquee{non_revendiquee, revendiquee_joueur1, revendiquee_joueur2};
-enum class NumJoueur{joueur1, joueur2};
-enum class JoueurGagnant{aucun, joueur1, joueur2};
-// différentes combinaisons de cartes possibles
-enum class Combinaison{somme, suite, couleur, brelan, suite_couleur};
 
 // classe permettant de lever des exceptions pour les erreurs ayant lieu dans une partie
 class PartieException : public std::exception{
@@ -72,7 +71,6 @@ std::ostream& operator<<(std::ostream& f, const Carte& c);  // Affichage d'une c
 class CarteNormale : public Carte{  // CarteNormale, classe héritant de la classe abstraite carte
 public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
-    CarteNormale() = default;
     CarteNormale(const CarteNormale& c) = default;
     CarteNormale& operator=(const CarteNormale& c) = default;
     string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
@@ -84,7 +82,6 @@ public:
         // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
         return "Clan : force = " + toString(force) + " Couleur = " + toString(couleur);
     }
-
     Couleur getCouleur() const { return couleur; }
     Force getForce() const { return force; }
     void setCouleur(const Couleur& c) {couleur = c;}
@@ -115,23 +112,37 @@ public:
 
     // Méthode permettant d'échanger deux cartes de la pioche
     void swapCartes(Carte& c1, Carte& c2){
+        cout << c1 << c2 << "\n";
         Carte tmp = c1;
         c1 = c2;
         c2 = tmp;
+        cout << c1 << c2 << "\n";
     }
 
     // Méthode permettant de piocher une carte
     virtual const Carte& piocher(){
         if (estVide())
             throw PartieException("La pioche est vide");
-        // Génération d'un nombre aléatoire entre 0 et nbCartes - 1 (pour piocher une des cartes piochable de la pioche)
-        std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
-        std::uniform_int_distribution<int> distrib{0, (int) nbCartes - 1};
-        size_t x = distrib(random_eng);
+        try{
+            // Génération d'un nombre aléatoire entre 0 et nbCartes - 1 (pour piocher une des cartes piochable de la pioche)
+            std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+            std::uniform_int_distribution<size_t> distrib{0, nbCartes - 1};
+            size_t x = distrib(random_eng);
+            if (x == 7)
+                x = 6;
+            // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
+            if (nbCartes - 1 == 7){
+                nbCartes --;
+                return *cartes[0];
+            }
 
-        // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
-        swapCartes(*cartes[x], *cartes[--nbCartes]);
-        return *cartes[nbCartes];  // on retourne la carte que l'on vient de "supprimer"
+            swapCartes(*cartes[x], *cartes[--nbCartes]);
+            return *cartes[nbCartes];  // on retourne la carte que l'on vient de "supprimer"
+        }catch(std::exception& e){
+            cout << "Erreur "<< e.what() << " lors de la pioche";
+            return *cartes[0];
+        }
+
     };
 
     void placerDessous(const Carte& carte){  // Méthode permettant de placer une carte en dessous de la pioche
@@ -148,6 +159,38 @@ private:
     array<Carte*, N> cartes;  // array de N cartes
     size_t nbCartes;  // nombre de cartes piochables
     // vector<Carte> cartesDessous; TODO pour la version tactique (+ mettre une carte aléatoire en dessous de la pioche initialement)
+};
+
+
+class Main final{  // classe permettant de représenter une main
+public:
+    Main() = default;
+    Main(size_t t_max) : taille_max(t_max){}
+    Main(const Main& m) = default;
+    Main& operator=(const Main& m) = default;
+    bool estVide() const{ return nbCartes == 0; }  // TODO à utiliser dans la version tactique
+    size_t getNbCartes() const{ return nbCartes; }
+    size_t getTailleMax() const{ return taille_max; }
+    const Carte& getCarte(size_t i) const{ return *cartes[i]; }
+
+    // Méthode permettant de jouer une carte de la main
+    const Carte& jouerCarte(unsigned int i){
+        const Carte& carte = *cartes[i];
+        cartes.erase(cartes.begin() + i);  // on efface la carte de la main
+        nbCartes--;  // on décrémente le nombre de cartes de la main
+        return carte;  // on retourne la carte à jouer
+    }
+
+    // Méthode permettant de piocher une carte, c'est-à-dire de l'ajouter à la main
+    void piocherCarte(const Carte& carte){
+        cartes.push_back(&carte);  // ajout de la carte dans la main
+        nbCartes++;  // on incrémente le nombre de cartes de la main
+    }
+    ~Main() = default;
+private:
+    vector<const Carte*  > cartes;  // vector représentant les cartes de la main d'un joueur
+    size_t taille_max = 6;  // par défaut, la main contient au maximum 6 cartes. Ce nombre est modifié pour la partie tactique
+    size_t nbCartes = 0;  // initialement, la main est vide
 };
 
 
@@ -199,7 +242,7 @@ public:
     unsigned int getSomme(NumJoueur num_joueur) const;
 
     // permet de vérifier qu'un joueur peut revendiquer une tuile
-    virtual bool verifRevendiquable(NumJoueur num_joueur);
+    virtual bool verifRevendiquable(NumJoueur num_joueur, TableauJouee tab);
 
     virtual Combinaison determinerCombinaison(NumJoueur num_joueur);
 
@@ -210,12 +253,18 @@ public:
     void incr_nb_pleine(){ nb_pleine++; }
 private:
     friend class UI;
-    array<vector<const Carte*  >, 2> cartes_posees;  // représente les cartes posées de part et d'autre de la tuile
+    array<vector<const Carte*>, 2> cartes_posees;  // représente les cartes posées de part et d'autre de la tuile
     //CarteTactique carte_posee_centre;  // A implémenter pour la version tactique
     unsigned int nb_pleine;  // nombre de cartes pour que la tuile soit pleine d'un côté (3 en général, 4 si la carte combat de Boue est posée au centre)
     NumJoueur rempli_en_premier;  // utilisé dans verif_revendiquable en cas d'égalité parfaite de combinaison
     TuileRevendiquee revendiquee;  // indique si la tuile est revendiquée (et par quel joueur) ou non
+    bool verifRevendiquableNonPleine(NumJoueur num_joueur, NumJoueur autre_joueur, Combinaison combinaison, TableauJouee tab) const;
+    bool verifSuiteCouleurPossible(bool meme_couleur, bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
+    bool verifBrelanPossible(bool meme_force, int force_carte_a_jouer, unsigned int somme_joueur_actif, TableauJouee tab) const;
+    bool verifMemeCouleurPossible(bool meme_couleur, unsigned int somme, unsigned int somme_joueur_actif, int couleur_carte_a_jouer, TableauJouee tab) const;
+    bool verifSuitePossible(bool suite, int force_max, unsigned int somme, unsigned int somme_joueur_actif, TableauJouee tab) const;
 };
+
 
 template<class T>
 class Frontiere final{  // classe permettant de représenter une frontière
@@ -224,8 +273,7 @@ public:
     Frontiere(const Frontiere& f) = delete;
     Frontiere& operator=(const Frontiere& f) = delete;
     const unsigned int getNbTuile() const{ return nb_tuile; };
-    bool verifRevendiquable(size_t i, NumJoueur num_joueur) { return tuiles[i].verifRevendiquable(num_joueur);}
-
+    bool verifRevendiquable(size_t i, NumJoueur num_joueur, TableauJouee tab) { return tuiles[i].verifRevendiquable(num_joueur, tab);}
     // Méthode permettant de calculer le score du joueur qui a perdu la partie
     unsigned int calculerScore(NumJoueur joueur_num) const;
 
@@ -244,36 +292,69 @@ private:
 };
 
 
-class Main final{  // classe permettant de représenter une main
-public:
-    Main() = default;
-    Main(size_t t_max) : taille_max(t_max){}
-    Main(const Main& m) = default;
-    Main& operator=(const Main& m) = default;
-    bool estVide() const{ return nbCartes == 0; }  // TODO à utiliser dans la version tactique
-    size_t getNbCartes() const{ return nbCartes; }
-    size_t getTailleMax() const{ return taille_max; }
-    const Carte& getCarte(size_t i) const{ return *cartes[i]; }
-
-    // Méthode permettant de jouer une carte de la main
-    const Carte& jouerCarte(unsigned int i){
-        const Carte& carte = *cartes[i];
-        cartes.erase(cartes.begin() + i);  // on efface la carte de la main
-        nbCartes--;  // on décrémente le nombre de cartes de la main
-        return carte;  // on retourne la carte à jouer
+// Méthode permettant de calculer le score du joueur qui a perdu la partie
+template <class T>
+unsigned int Frontiere<T>::calculerScore(NumJoueur joueur_num) const{
+    // Pour cela, on compte puis retourne le nombre de bornes revendiquéess par ce joueur.
+    unsigned int score = 0;
+    for (size_t i = 0; i < nb_tuile; i++){
+        if ((int) tuiles[i].getRevendiquee() == (int) joueur_num + 1)
+            score++;
     }
+    return score;
+}
 
-    // Méthode permettant de piocher une carte, c'est-à-dire de l'ajouter à la main
-    void piocherCarte(const Carte& carte){
-        cartes.push_back(&carte);  // ajout de la carte dans la main
-        nbCartes++;  // on incrémente le nombre de cartes de la main
+
+// Méthode permettant de retourner le joueur gagnant ou JoueurGagnant::aucun si aucun joueur n'a gagné à ce stade
+template <class T>
+JoueurGagnant Frontiere<T>::estFinie() const{
+    unsigned int adjacent = 1;  // compte le nombre de tuiles adjacentes revendiquées par un même joueur
+    unsigned int joueur_preced = 0;  // joueur ayant revendiqué la borne précédente
+    unsigned int nb_joueur_1 = 0;  // nombre de bornes revendiquées par le joueur 1
+    unsigned int nb_joueur_2 = 0;  // nombre de bornes revendiquées par le joueur 2
+
+    for (size_t i = 0; i < nb_tuile; i++){
+        TuileRevendiquee num_joueur = tuiles[i].getRevendiquee();
+        if (num_joueur == TuileRevendiquee::revendiquee_joueur1){  // le joueur 1 a revendiqué la tuile
+            if (joueur_preced == 1){  // le joueur 1 a également revendiqué la tuile précédente
+                adjacent++;
+                if (adjacent == 3)
+                    // 3 tuiles adjacentes revendiquées par le joueur 1, il l'emporte
+                    return JoueurGagnant::joueur1;
+            } else
+                // le joueur 1 n'a pas revendiqué la tuile précédente
+                adjacent = 1;
+            nb_joueur_1++;
+
+            if (nb_joueur_1 == 5)
+                // 5 tuiles revendiquées par le joueur 1, il l'emporte
+                return JoueurGagnant::joueur1;
+            joueur_preced = 1;
+        } else if (num_joueur == TuileRevendiquee::revendiquee_joueur2){  // le joueur 2 a revendiqué la tuile
+            if (joueur_preced == 2){  // le joueur 2 a également revendiqué la tuile précédente
+                adjacent++;
+                if (adjacent == 3)
+                    // 3 tuiles adjacentes revendiquées par le joueur 2, il l'emporte
+                    return JoueurGagnant::joueur2;
+            } else
+                // le joueur 2 n'a pas revendiqué la tuile précédente
+                adjacent = 1;
+            nb_joueur_2++;
+
+            if (nb_joueur_2 == 5)
+                // 5 tuiles revendiquées par le joueur 2, il l'emporte
+                return JoueurGagnant::joueur2;
+            joueur_preced = 2;
+        } else{  // Tuile non revendiquee
+            joueur_preced = 0;
+            adjacent = 1;
+        }
     }
-    ~Main() = default;
-private:
-    vector<const Carte*  > cartes;  // vector représentant les cartes de la main d'un joueur
-    size_t taille_max = 6;  // par défaut, la main contient au maximum 6 cartes. Ce nombre est modifié pour la partie tactique
-    size_t nbCartes = 0;  // initialement, la main est vide
-};
+    // On a parcouru toutes les tuiles sans trouver trois tuiles adjacentes revendiquées par un même joueur
+    // ni 5 tuiles revendiquées par un même joueur. La partie n'est donc pas encore terminée
+    return JoueurGagnant::aucun;
+}
+
 
 
 class UI
@@ -287,8 +368,8 @@ public:
     virtual Pos getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
     virtual Pos getChoixBorneIa(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
 
-    virtual Movement getChoixBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
-    virtual Movement getChoixBornesARevendiquerIa(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
+    virtual Movement getChoixBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num, TableauJouee tab);
+    virtual Movement getChoixBornesARevendiquerIa(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num, TableauJouee tab);
 };
 
 
@@ -308,16 +389,16 @@ public:
     }
 
     // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-    virtual Movement choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur joueur_num);
+    virtual Movement choisirCarteAJouer(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-    virtual void jouerCarte( Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
+    virtual void jouerCarte(Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
 
     // Méthode permettant la saisie par l'utilisateur d'une ou plusieurs bornes à revendiquer
-    virtual Movement choisirBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
+    virtual Movement choisirBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num, TableauJouee tab);
 
     // Méthode permettant de revendiquer une borne dont le numéro est donné
-    virtual void revendiquerBorne( Frontiere<class Tuile>& frontiere, unsigned int num_borne, NumJoueur joueur_num){
+    virtual void revendiquerBorne(Frontiere<class Tuile>& frontiere, unsigned int num_borne, NumJoueur joueur_num){
         frontiere.tuiles[num_borne].revendiquer(joueur_num);
     }
     Main getMain() const{ return main; }
@@ -410,9 +491,8 @@ public:
 private:
     static const int NMAIN = 6;  // 6 cartes dans la main dans cette variante
     array<Agent, 2> agents{Agent(NMAIN), Agent(NMAIN)};  // tableau des agents de la partie
-    using TableauJouee = array<array<bool, NFORCE>, NCOULEUR>;  // TODO attention, ne sert que pour PremiereNormale, faire attention en impélmentant la version tactique
-    TableauJouee tableauJouee;  // tableau utilisé pour stocker les cartes déjà jouées // TODO s'en servir pour vérifier si une borne est revendiquable ou non avant qu'elle ne soit pleine de l'autre côté
-
+    using TableauJouee = array<array<bool, NFORCE>, NCOULEUR>;
+    TableauJouee tableauJouee;  // tableau utilisé pour stocker les cartes déjà jouées
     // Méthode permettant d'initialiser les agents (appelée par la méthode Premiere::commencer)
     void initierAgents(Ordre ordre) override;
 
