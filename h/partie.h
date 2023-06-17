@@ -283,8 +283,12 @@ public:
     virtual void afficherCote(const Tuile &t, size_t cote) const;
     virtual void afficherEtatBorne(const Tuile &t, size_t num_borne) const;
     virtual Pos getChoixCarte(Main& main);
+    virtual Pos getChoixCarteIa(Main& main);
     virtual Pos getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
-//    virtual Pos getBorneARevendiquer;
+    virtual Pos getChoixBorneIa(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
+
+    virtual Movement getChoixBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
+    virtual Movement getChoixBornesARevendiquerIa(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
 };
 
 
@@ -294,7 +298,8 @@ public:
     Agent(size_t taille_main) : main(Main(taille_main)){}
     Agent(const Agent& a) = default;
     Agent& operator=(const Agent& a) = default;
-
+    const bool& getIa() const { return ia;}
+    void setIa (const bool& est_ia) {ia = est_ia;}
     // Méthode permettant de piocher une carte
     void piocher(const Carte& carte){
         if (main.getTailleMax() == main.getNbCartes())
@@ -303,7 +308,7 @@ public:
     }
 
     // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-    virtual Movement choisirCarteAJouer(const Frontiere<class Tuile>& frontiere, NumJoueur joueur_num);
+    virtual Movement choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur joueur_num);
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
     virtual void jouerCarte( Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f, Couleur& coul);
@@ -319,6 +324,7 @@ public:
     virtual ~Agent() = default;
 private:
     UI ui = UI();
+    bool ia;
     Main main;  // un agent a une main
 };
 
@@ -326,19 +332,20 @@ private:
 class Joueur final{  // classe représentant un joueur du jeu
 public:
     Joueur() = default;
-    Joueur(const string& n) : nom(n){}
+    Joueur(const string& n, const bool& est_ia) : nom(n), ia(est_ia){}
     Joueur(const Joueur& j) = default;
     Joueur& operator=(const Joueur& j) = default;
     unsigned int getScore() const{ return score; }
     void setScore(unsigned int points){ score += points; }
     const string& getNom() const{ return nom; }
     const Agent& getAgent() const{ return agent; }
+    void setIa(const bool& est_ia) {agent.setIa(est_ia);}
     ~Joueur() = default;
 
 private:
     string nom;
     unsigned int score = 0;
-    // bool ia;  // TODO à ajouter lorsque l'on implémentera la possibilité de jouer contre une ia (modifier Jeu::commencer_jeu en conséquence, ainsi que toutes les fonctions qui demandent un choix au joueur
+    bool ia;
     Agent agent;  // un joueur dispose d'un agent
 };
 

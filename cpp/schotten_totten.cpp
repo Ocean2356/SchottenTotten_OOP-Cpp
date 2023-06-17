@@ -127,26 +127,42 @@ AbstractEdition* EditionProducer::getEdition(Edition edition){
 }
 
 
-// Méthode permettant de saisir les noms des joueurs  // TODO ajouter choix ia/humain pour chaque joueur
+// Méthode permettant de saisir les noms des joueurs
 void Jeu::commencerJeu(){
     array<string, 2> nom_preced;
+    bool only_ia = true;
     for (size_t i = 0; i < joueurs.size(); i++){
         string nom;
         bool test_nom = false;
-        while (!test_nom){
+        while (!test_nom) {
             test_nom = true;
             cout << "Entrez le nom du joueur " << i + 1 << ": ";
             getline(cin, nom);
             for (const auto &n: nom_preced)
-                if (n == nom){
+                if (n == nom) {
                     cout << "Nom deja utilise\n";
                     test_nom = false;
                     break;
                 }
         }
         nom_preced[i] = nom;
-        joueurs[i] = Joueur(nom);
+        string ia;
+        bool est_ia;
+        bool test_saisie = false;
+        while (!test_saisie){
+            cout << "Entrez 0 pour que le joueur " << nom << " soit un humain, 1 pour une ia: ";
+            getline(cin, ia);
+            if ((unsigned int) (ia[0] - '0') == 0 || (unsigned int) (ia[0] - '0') == 1) {
+                est_ia = (bool) (ia[0] - '0');
+                test_saisie = true;
+            }
+        }
+        joueurs[i] = Joueur(nom, est_ia);
+        if (!est_ia)
+            only_ia = false;
+        joueurs[i].setIa(est_ia);
     }
+    this->setIaPlayers(only_ia);
 }
 
 // Méthode permettant de déterminer l'ordre de jeu des joueurs qui retourne un ordre (array<Joueurs*, 2>)
@@ -186,8 +202,14 @@ void Jeu::jouerPartie(Edition edition, Variante variante){
     partie->commencer(ordre);
 
     // déroulement de la partie tour par tour jusqu'à ce que la partie soit terminée
-    while (!partie->testerFin())
+    while (!partie->testerFin()) {
         partie->jouerTour();
+        if (this->only_ia_players) {
+            string attente;
+            cout << "Appuyez sur entree pour continuer: ";
+            getline(cin, attente);
+        }
+    }
 
     // affichage du résultat de la partie et mise à jour des scores des joueurs
     traiterResultat(ordre, partie->terminer());

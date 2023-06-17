@@ -240,8 +240,8 @@ void Tuile::revendiquer(NumJoueur num_joueur){
 }
 
 // Méthode permettant de calculer le score du joueur qui a perdu la partie
-template <>
-unsigned int  Frontiere<class Tuile>::calculerScore(NumJoueur joueur_num) const{
+template <class T>
+unsigned int Frontiere<T>::calculerScore(NumJoueur joueur_num) const{
     // Pour cela, on compte puis retourne le nombre de bornes revendiquéess par ce joueur.
     unsigned int score = 0;
     for (size_t i = 0; i < nb_tuile; i++){
@@ -254,7 +254,7 @@ unsigned int  Frontiere<class Tuile>::calculerScore(NumJoueur joueur_num) const{
 
 // Méthode permettant de retourner le joueur gagnant ou JoueurGagnant::aucun si aucun joueur n'a gagné à ce stade
 template <class T>
-JoueurGagnant  Frontiere<T>::estFinie() const{
+JoueurGagnant Frontiere<T>::estFinie() const{
     unsigned int adjacent = 1;  // compte le nombre de tuiles adjacentes revendiquées par un même joueur
     unsigned int joueur_preced = 0;  // joueur ayant revendiqué la borne précédente
     unsigned int nb_joueur_1 = 0;  // nombre de bornes revendiquées par le joueur 1
@@ -303,7 +303,7 @@ JoueurGagnant  Frontiere<T>::estFinie() const{
 }
 
 // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-void Agent:: jouerCarte( Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
+void Agent::jouerCarte(Frontiere<class Tuile>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, Force& f,
                 Couleur& coul){
     if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
         throw PartieException("La tuile est deja pleine\n");
@@ -319,13 +319,19 @@ void Agent:: jouerCarte( Frontiere<class Tuile>& frontiere, unsigned int pos_car
 Movement Agent::choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur joueur_num){
     Movement mvt;  // string permettant d'indiquer les actions à effectuer
     ui.afficherFrontiere(f);
-    string recup_choix;
     if (main.getNbCartes() > 0){  // s'il reste encore des cartes au joueur
-        Pos choix_carte = ui.getChoixCarte(main);
+        Pos choix_carte;
+        if (this->getIa())
+            choix_carte = ui.getChoixCarteIa(main);
+        else
+            choix_carte = ui.getChoixCarte(main);
         mvt += "Carte:";
         mvt += (char) choix_carte;
-
-        Pos choix_borne = ui.getChoixBorne(f, joueur_num);
+        Pos choix_borne;
+        if (this->getIa())
+            choix_borne = ui.getChoixBorneIa(f, joueur_num);
+        else
+            choix_borne = ui.getChoixBorne(f, joueur_num);
         if (choix_borne == ERREUR) return "";
         mvt += "Borne:";
         mvt += (char) (choix_borne);
@@ -335,8 +341,15 @@ Movement Agent::choisirCarteAJouer(const  Frontiere<class Tuile>& f, NumJoueur j
 
 
 Movement Agent::choisirBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num){
+    if (this->getIa())
+        return ui.getChoixBornesARevendiquerIa(f, joueur_num);
+    else
+        return ui.getChoixBornesARevendiquer(f, joueur_num);
+}
+
+Movement UI::getChoixBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur joueur_num){
     Movement mvt;
-    ui.afficherFrontiere(f);
+    afficherFrontiere(f);
 
     string choix_revendiquer;
     Pos nb_bornes_a_revendiquer = 0;
@@ -397,6 +410,24 @@ Movement Agent::choisirBornesARevendiquer( Frontiere<class Tuile>& f, NumJoueur 
     return mvt;
 }
 
+
+Movement UI::getChoixBornesARevendiquerIa( Frontiere<class Tuile>& f, NumJoueur joueur_num){
+    Movement mvt;
+    Pos nb_bornes_a_revendiquer = 0;
+
+    for (Pos i = 0; i<f.getNbTuile(); i++)
+        if (f.verifRevendiquable((size_t) i, joueur_num)){
+            // Si la tuile est revendiquable par le joueur
+            mvt += "Revendiquer:";
+            mvt += i;
+            nb_bornes_a_revendiquer++;
+        }
+    mvt += "nb:";
+    mvt += (char) nb_bornes_a_revendiquer;
+    return mvt;
+}
+
+
 // Méthode permettant de calculer et de retourner le score des joueurs à la fin d'une partie
 Resultat Partie::terminer(){
     Resultat res;
@@ -441,7 +472,6 @@ void PremiereNormale::jouerTour(){
         cout << "\nIl reste " << piocheNormale.getNbCartes() << " cartes dans la pioche.";
     else
         cout << "`\nLa pioche est vide !";
-
     Movement carte_a_jouee = agent.choisirCarteAJouer(frontiere, (NumJoueur) agentActive);
     // Jouer la carte choisie
     size_t pos_carte = carte_a_jouee.find("Carte:");
@@ -563,16 +593,27 @@ Pos UI::getChoixCarte(Main& main) {
     string recup_choix;
     cout << "Choix de la carte a jouer\n";
     for (Pos i = 0; i < main.getNbCartes(); i++)
-    cout << "Entrez " << i + 1 << " pour jouer la carte " << main.getCarte(i) << "\n";
+        cout << "Entrez " << i + 1 << " pour jouer la carte " << main.getCarte(i) << "\n";
     Pos choix_carte = -1;
     while (choix_carte < 1 || choix_carte > main.getNbCartes()){
-    cout << "Votre Choix : ";
-    cin >> recup_choix;
-    if ((Pos) (recup_choix[0] - '0') >= 1 && (Pos) (recup_choix[0] - '0') <= main.getNbCartes())
-    choix_carte = (Pos) (recup_choix[0] - '0');
+        cout << "Votre Choix : ";
+        cin >> recup_choix;
+        if ((Pos) (recup_choix[0] - '0') >= 1 && (Pos) (recup_choix[0] - '0') <= main.getNbCartes())
+            choix_carte = (Pos) (recup_choix[0] - '0');
     }
     --choix_carte;
     return choix_carte;
+}
+
+Pos UI::getChoixCarteIa(Main& main) {
+    // Génération d'un nombre aléatoire entre 0 et nbBornesJouables - 1
+    std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<int> distrib{0, (int) main.getNbCartes() - 1};
+    auto debug = distrib(random_eng);
+    for (Pos i = 0; i < main.getNbCartes(); i++)
+        cout << "Carte " << i << " : " << main.getCarte(i) << "\n";
+    cout << "Choix carte ia = " << debug << "\n";
+    return (char) debug;
 }
 
 Pos UI::getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num) {
@@ -605,5 +646,23 @@ Pos UI::getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num) {
         if (!saisie_correcte)
             cout << "Veuillez entrez un numero d'une borne sur laquelle vous pouvez jouer\n";
     }
-    return --choix_borne;
+    return (char) --choix_borne;
+}
+
+Pos UI::getChoixBorneIa(const Frontiere<class Tuile>& f, NumJoueur joueur_num) {
+    vector <int> borne_jouable;
+    for (size_t i = 0; i < f.getNbTuile(); i++){
+        if (!f.tuiles[i].cotePlein(joueur_num) && !f.tuiles[i].estRevendiquee()){
+            borne_jouable.push_back((int) i);
+        }
+    }
+    if (borne_jouable.empty())
+        // on ne peut jouer sur aucune borne (pourrait arriver en variante tactique)
+        return -1;
+    // Génération d'un nombre aléatoire entre 0 et nbBornesJouables - 1
+    std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<int> distrib{0, (int) borne_jouable.size() - 1};
+    auto debug = borne_jouable[distrib(random_eng)];
+    cout << "Choix borne ia = " << debug << "\n";
+    return (char) debug;
 }
