@@ -195,7 +195,7 @@ void PremiereTactique::jouerTour(){
     else
         cout << "La pioche Tactique est vide !\n";
 
-    Movement carte_a_jouer = agent.choisirCarteAJouer(frontiere_tactique, (NumJoueur) agentActive);
+    Movement carte_a_jouer = agent.choisirCarteAJouer(frontiere_tactique, (NumJoueur) agentActive, agents[(agentActive + 1)%2].getNbCartesTactiquesJouees());
 
     size_t pos_carte = carte_a_jouer.find("Carte:");
     if (pos_carte == std::string::npos){
@@ -278,14 +278,8 @@ void PremiereTactique::initierPiocheTactique(){
 
 // Méthode permettant d'initialiser les agents (appelée par la méthode Premiere::commencer)
 void PremiereTactique::initierAgents(Ordre ordre){
-    auto agent = dynamic_cast<const AgentTactique*> (&ordre[0]->getAgent());
-    if (agent == nullptr)
-        throw PartieException("Erreur, on devrait avoir un agent tactique pour une partie tactique");
-    agents[0] = *agent;
-    agent = dynamic_cast<const AgentTactique*> (&ordre[1]->getAgent());
-    if (agent == nullptr)
-        throw PartieException("Erreur, on devrait avoir un agent tactique pour une partie tactique");
-    agents[1] = *agent;
+    agents[0] = AgentTactique(NCARTETACTIQUE);
+    agents[1] = AgentTactique(NCARTETACTIQUE);
     agentActive = 0;
 }
 
@@ -306,7 +300,7 @@ PremiereTactique::PremiereTactique(){
 
 
 // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const{
+Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num, unsigned int nb_cartes_tactiques_jouees_autre_joueur){
     Movement mvt;  // string permettant d'indiquer les actions à effectuer
     ui_tactique.afficherFrontiere_tactique(f);
     vector <int> pos_cartes_normales;
@@ -326,7 +320,7 @@ Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>&
     if(a_carte_normale_en_main) //il a au moins une carte normale
         cout << "Entrez " << nb_choix++ << " pour jouer une carte normale\n";
 
-    if(a_carte_tactique_en_main)  //il a au moins une carte tactique
+    if(a_carte_tactique_en_main && nb_cartes_tactiques_jouees <= nb_cartes_tactiques_jouees_autre_joueur)  //il a au moins une carte tactique
         cout << "Entrez " << nb_choix++ << " pour jouer une carte normale\n";
 
     if (!a_carte_normale_en_main)
@@ -349,6 +343,7 @@ Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>&
     }
 
     else if ((choix[0] == '1' && !a_carte_normale_en_main && a_carte_tactique_en_main) || (choix[0] == '2' && !a_carte_normale_en_main && a_carte_tactique_en_main)){
+        nb_cartes_tactiques_jouees ++;
         if (this->getIa())
             carte_a_jouer = ui_tactique.getChoixCarteIa(main, pos_cartes_tactiques);
         else

@@ -282,13 +282,15 @@ public:
 
 class AgentTactique final: public Agent{
 public:
+    AgentTactique() = default;
     AgentTactique(size_t taille_main) : main(Main(taille_main)), nb_cartes_tactiques_jouees(0){}
     AgentTactique(const AgentTactique&) = default;
     AgentTactique& operator=(const AgentTactique&) = default;
 
+    unsigned int getNbCartesTactiquesJouees() const { return nb_cartes_tactiques_jouees;}
 
     // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-    Movement choisirCarteAJouer(const Frontiere<class TuileTactique>& frontiere, NumJoueur joueur_num) const;
+    Movement choisirCarteAJouer(const Frontiere<class TuileTactique>& frontiere, NumJoueur joueur_num, unsigned int nb_cartes_tactiques_jouees_autre_joueur);
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
     void jouerCarte(Frontiere<class TuileTactique>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, string nom_carte);
@@ -343,10 +345,11 @@ public:
     void setCarteTactique(size_t n, string& nom) {
         piocheTactique.setCarteTactique(n, nom);
     }
+
+    static const int NCARTETACTIQUE = 10;
 private:
     Frontiere<TuileTactique> frontiere_tactique;
     static const int NMAIN = 7;  // 7 cartes dans la main dans cette variante
-    static const int NCARTETACTIQUE = 10;
     PiocheTactique<CarteTactique, NCARTETACTIQUE> piocheTactique;
     array<AgentTactique, 2> agents{AgentTactique(NMAIN), AgentTactique(NMAIN)};  // tableau des agents de la partie
     // Méthode permettant d'initialiser les agents (appelée par la méthode Premiere::commencer)

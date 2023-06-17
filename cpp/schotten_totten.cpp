@@ -7,6 +7,7 @@ et méthodes déclarées mais non définies dans schotten_totten.h
 
 
 #include "../h/schotten_totten.h"
+#include "../h/tactique.h"
 
 // liste des éditions
 std::initializer_list<Edition> Editions ={Edition::Premiere, Edition::Deuxieme};
@@ -90,8 +91,8 @@ Partie* PremiereFactory::getPartie(Variante variante){
     switch (variante){
         case Variante::Normale:
             return new PremiereNormale();
-//        case Variante::Tactique:
-//            return new PremiereTactique();
+        case Variante::Tactique:
+            return new PremiereTactique();
 //        case Variante::Experts:
 //            return new PremiereExperts();
         default:
@@ -196,6 +197,7 @@ void Jeu::jouerPartie(Edition edition, Variante variante){
     // abstract factory pattern pour choisir la partie et la variante
     AbstractEdition* abstractEdition = editionProducer.getEdition(edition);
     Partie* partie = abstractEdition->getPartie(variante);
+
 
     // Détermination de l'ordre de jeu des joueurs et initialisations
     Ordre ordre = determinerOrdre();
