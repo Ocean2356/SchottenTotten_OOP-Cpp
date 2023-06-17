@@ -126,12 +126,21 @@ public:
 
             toString(cartes[x]->getCouleur());
             toString(cartes[x]->getForce());
+            toString(cartes[nbCartes - 1]->getCouleur());
+            toString(cartes[nbCartes - 1]->getForce());
             swapCartes(*cartes[x], *cartes[--nbCartes]);
             return *cartes[nbCartes];  // on retourne la carte que l'on vient de "supprimer"
         }catch(PartieException& e){
             cout << "Erreur "<< e.getInfo() << " lors de la pioche";
-            swapCartes(*cartes[0], *cartes[--nbCartes]);
-            return *cartes[nbCartes];
+            try{
+                toString(cartes[nbCartes - 1]->getCouleur());
+                toString(cartes[nbCartes - 1]->getForce());
+                return *cartes[--nbCartes];
+            }catch(PartieException& e){
+                nbCartes --;
+                return *cartes[0];
+            }
+
         }
 
     };

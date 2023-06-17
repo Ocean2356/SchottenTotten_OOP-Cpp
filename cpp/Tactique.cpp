@@ -1,6 +1,6 @@
 
 
-#include "../h/Tactique.h"
+#include "../h/tactique.h"
 #include <iostream>
 #include <string>
 
@@ -55,7 +55,7 @@ string toString(Ruse r) {
 
 void demande_couleur(CarteTroupe& carte){
     for (int i = 0; i < static_cast<int>(Couleur::Violet) + 1; i++) {
-        Couleur couleur = static_cast<Couleur>(i);
+        auto couleur = static_cast<Couleur>(i);
         std::cout << i << ": " << static_cast<int>(couleur) << std::endl;
     }
     int choix_couleur = -1;
@@ -68,7 +68,7 @@ void demande_couleur(CarteTroupe& carte){
 
 void demande_force(CarteTroupe& carte, unsigned int max){
     for (int i = 0; i < max  + 1; i++) {
-        Force force = static_cast<Force>(i);
+        auto force = static_cast<Force>(i);
         std::cout << i << ": " << static_cast<int>(force) << std::endl;
     }
     int choix_force = -1;
@@ -186,38 +186,18 @@ void CarteRuse::mettre_ChasseurdeTete() {
 void PremiereTactique::jouerTour(){
     AgentTactique& agent = agents[agentActive];  // On récupère l'agent dont c'est le tour
     unsigned int choix_pioche = 0;
-    vector <int> pos_cartes_normales;
-    vector <int> pos_cartes_tactiques;
     if(piocheNormale.getNbCartes() > 0)
-        cout << "\nIl reste " << piocheNormale.getNbCartes() << " cartes dans la pioche.";
+        cout << "Il reste " << piocheNormale.getNbCartes() << " cartes dans la pioche normale.\n";
     else
-        cout << "`\nLa pioche Normale est vide !";
+        cout << "La pioche Normale est vide !\n";
     if(piocheTactique.getNbCartes() > 0)
-        cout << "\nIl reste " << piocheTactique.getNbCartes() << " cartes dans la pioche.";
+        cout << "Il reste " << piocheTactique.getNbCartes() << " cartes dans la pioche tactique.\n";
     else
-        cout << "\nLa pioche Tactique est vide !";
+        cout << "La pioche Tactique est vide !\n";
 
-    //Comptage du nombre de cartes tactiques du joueur
-    for(Pos i= 0 ; i <= agent.getMain().getNbCartes(); i++){
-        if(agent.getMain().getCarte(i).estTactique()){
-            pos_cartes_tactiques.push_back(i);
-        }
-        else
-            pos_cartes_normales.push_back(i);
-    }
-    if(!pos_cartes_normales.empty()){
-        //il a au moins une carte normale
-        Movement carte_a_jouee = agent.choisirCarteAJouer(frontiere_tactique, (NumJoueur) agentActive);
-        // on verifie combien il a jouer de carte tactique
-        if(carte_a_jouee.find("Carte:") != std::string::npos){
+    Movement carte_a_jouer = agent.choisirCarteAJouer(frontiere_tactique, (NumJoueur) agentActive);
 
-        }
-    }
-
-
-    Movement carte_a_jouee = agent.choisirCarteAJouer(frontiere_tactique, (NumJoueur) agentActive);
-    // Jouer la carte choisie
-    size_t pos_carte = carte_a_jouee.find("Carte:");
+    size_t pos_carte = carte_a_jouer.find("Carte:");
     if (pos_carte == std::string::npos){
         // pas de carte à jouer, on force le joueur à revendiquer toutes les bornes possibles
         // pour éviter que la partie ne s'arrête jamais
@@ -225,15 +205,14 @@ void PremiereTactique::jouerTour(){
             if (frontiere_tactique.verifRevendiquable(i, (NumJoueur) agentActive))
                 agent.revendiquerBorne(frontiere_tactique, i, (NumJoueur) agentActive);
         }
-
     }else{
-        auto carte_a_jouer = (unsigned int) (unsigned char) carte_a_jouee[pos_carte + 6];
-        size_t pos_borne = carte_a_jouee.find("Borne:");
+        auto pos_carte_a_jouer = (unsigned int) (unsigned char) carte_a_jouer[pos_carte + 6];
+        size_t pos_borne = carte_a_jouer.find("Borne:");
         if (pos_borne != std::string::npos){  // si on a trouvé une position de borne
             // on place la carte sur la borne
-            auto borne_sur_laquelle_jouer = (unsigned int) (unsigned char) carte_a_jouee[pos_borne + 6];
+            auto borne_sur_laquelle_jouer = (unsigned int) (unsigned char) carte_a_jouer[pos_borne + 6];
             string nom_carte;
-            agent.jouerCarte(frontiere_tactique, carte_a_jouer, borne_sur_laquelle_jouer, (NumJoueur) agentActive, nom_carte);
+            agent.jouerCarte(frontiere_tactique, pos_carte_a_jouer, borne_sur_laquelle_jouer, (NumJoueur) agentActive, nom_carte);
         }
     }
 
@@ -255,10 +234,19 @@ void PremiereTactique::jouerTour(){
         }
     }
 
-    cout << "\nDans quel pioche voulez-vous piochez ? "<< endl;
-    cout << "1: Pioche normale" << endl;
-    cout << "2: Pioche tactique" << endl;
-    cin >> choix_pioche;
+    cout << "\nDans quel pioche voulez-vous piochez ? \n";
+    cout << "1: Pioche normale\n";
+    cout << "2: Pioche tactique\n";
+    bool saisie_ok = false;
+    string saisie;
+    while (!saisie_ok){
+        getline(cin, saisie);
+        if ((unsigned int) saisie[0] - '0' == 1 || (unsigned int) saisie[0] - '0' == 2){
+            saisie_ok = true;
+            choix_pioche = (unsigned int) (unsigned char) saisie[0];
+        }
+    }
+
     if (choix_pioche == 1){
         // Piocher une nouvelle carte
         if (piocheNormale.getNbCartes() > 0){
@@ -272,7 +260,6 @@ void PremiereTactique::jouerTour(){
             agent.piocher(carte);
         }
     }
-
     agentSuivant();
 }
 
@@ -319,20 +306,65 @@ PremiereTactique::PremiereTactique(){
 
 
 // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num){
+Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const{
     Movement mvt;  // string permettant d'indiquer les actions à effectuer
     ui_tactique.afficherFrontiere_tactique(f);
-    string recup_choix;
-    if (main.getNbCartes() > 0){  // s'il reste encore des cartes au joueur
-        Pos choix_carte = ui_tactique.getChoixCarte(main);
-        mvt += "Carte:";
-        mvt += (char) choix_carte;
+    vector <int> pos_cartes_normales;
+    vector <int> pos_cartes_tactiques;
 
-        Pos choix_borne = ui_tactique.getChoixBorne(f, joueur_num);
-        if (choix_borne == ERREUR) return "";
-        mvt += "Borne:";
-        mvt += (char) (choix_borne);
+    //Comptage du nombre de cartes tactiques du joueur
+    for(Pos i= 0 ; i <= getMain().getNbCartes(); i++){
+        if(getMain().getCarte(i).estTactique()){
+            pos_cartes_tactiques.push_back(i);
+        }
+        else
+            pos_cartes_normales.push_back(i);
     }
+    unsigned int nb_choix = 1;
+    bool a_carte_normale_en_main = !pos_cartes_normales.empty();
+    bool a_carte_tactique_en_main = !pos_cartes_tactiques.empty();
+    if(a_carte_normale_en_main) //il a au moins une carte normale
+        cout << "Entrez " << nb_choix++ << " pour jouer une carte normale\n";
+
+    if(a_carte_tactique_en_main)  //il a au moins une carte tactique
+        cout << "Entrez " << nb_choix++ << " pour jouer une carte normale\n";
+
+    if (!a_carte_normale_en_main)
+        cout << "Entrez " << nb_choix << " pour ne rien jouer ce tour-ci\n";
+    bool test_saisie = false;
+    string choix;
+    while (!test_saisie){
+        cout << "Votre choix : ";
+        getline(cin, choix);
+        if ((unsigned int) (choix[0] - '0') >= 1 && (unsigned int) (choix[0] - '0') <= nb_choix) {
+            test_saisie = true;
+        }
+    }
+    Pos carte_a_jouer = -1;
+    if (choix[0] == '1' && a_carte_normale_en_main){
+        if (this->getIa())
+            carte_a_jouer = ui_tactique.getChoixCarteIa(main, pos_cartes_normales);
+        else
+            carte_a_jouer = ui_tactique.getChoixCarte(main, pos_cartes_normales);
+    }
+
+    else if ((choix[0] == '1' && !a_carte_normale_en_main && a_carte_tactique_en_main) || (choix[0] == '2' && !a_carte_normale_en_main && a_carte_tactique_en_main)){
+        if (this->getIa())
+            carte_a_jouer = ui_tactique.getChoixCarteIa(main, pos_cartes_tactiques);
+        else
+            carte_a_jouer = ui_tactique.getChoixCarte(main, pos_cartes_tactiques);
+    }
+    else{
+        return mvt;
+    }
+
+    mvt += "Carte:";
+    mvt += (char) carte_a_jouer;
+
+    Pos choix_borne = ui_tactique.getChoixBorne(f, joueur_num);
+    if (choix_borne == ERREUR) return "";
+    mvt += "Borne:";
+    mvt += (char) (choix_borne);
     return mvt;
 }
 
@@ -388,105 +420,3 @@ Movement AgentTactique::choisirBornesARevendiquer(Frontiere<class TuileTactique>
     else
         return ui_tactique.getChoixBornesARevendiquer(f, joueur_num);
 }
-
-Movement UITactique::getChoixBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num){
-    Movement mvt;
-    afficherFrontiere_tactique(f);
-
-    string choix_revendiquer;
-    Pos nb_bornes_a_revendiquer = 0;
-    while (choix_revendiquer != "oui" && choix_revendiquer != "non"){
-        cout << "souhaitez-vous revendiquer une borne ? (oui/non)\n";
-        cin >> choix_revendiquer;
-        size_t i = 0;
-        for (auto& c: choix_revendiquer)
-            choix_revendiquer[i++] = (char) tolower(c);
-        if (choix_revendiquer != "oui") continue;
-
-        int continuer = 1;
-        vector <unsigned int> bornes_a_revendiquer;
-        string recup_choix;
-        while (continuer != 0){
-            unsigned int choix_borne_a_revendiquer = 0;
-            while (choix_borne_a_revendiquer < 1 || choix_borne_a_revendiquer > f.getNbTuile()){
-                cout << "Entrez le numero de la borne a revendiquer  (entre 1 et " << f.getNbTuile() << "): ";
-                cin >> recup_choix;
-                if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9)
-                    choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
-            }
-            if (f.verifRevendiquable(choix_borne_a_revendiquer - 1, joueur_num)){
-                // Si la tuile est revendiquable par le joueur
-                bool saisie_incorrecte = false;
-                for (auto& b : bornes_a_revendiquer)
-                    if (b == choix_borne_a_revendiquer){
-                        saisie_incorrecte = true;
-                        cout << "Veuillez entrer un numero d'une AUTRE borne\n";
-                    }
-                if (! saisie_incorrecte){
-                    bornes_a_revendiquer.push_back(choix_borne_a_revendiquer);
-                    mvt += "Revendiquer:";
-                    mvt += (char) (choix_borne_a_revendiquer - 1);
-                    nb_bornes_a_revendiquer++;
-                    do{
-                        saisie_incorrecte = true;
-                        cout << "Revendiquer une autre borne ? (entrez 0 si non, un entier strictement positif si oui): ";
-                        cin >> recup_choix;
-                        if ((unsigned int) (recup_choix[0] - '0') >= 0 && (unsigned int) (recup_choix[0] - '0') <= 9){
-                            saisie_incorrecte = false;
-                            choix_borne_a_revendiquer = (unsigned int) (recup_choix[0] - '0');
-                            continuer = choix_borne_a_revendiquer != 0;
-                        }
-                    }while (continuer && saisie_incorrecte);
-                }
-            } else{
-                // sinon, on considère que le joueur s'est trompé
-                // et qu'il n'essayera pas de revendiquer d'autres bornes pour ce tour
-                cout << "La borne " << choix_borne_a_revendiquer << " ne peut pas etre revendiquee";
-                continuer = 0;
-            }
-
-        }
-    }
-    mvt += "nb:";
-    mvt += (char) nb_bornes_a_revendiquer;
-    return mvt;
-}
-
-
-Movement UITactique::getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>& f, NumJoueur joueur_num){
-    Movement mvt;
-    Pos nb_bornes_a_revendiquer = 0;
-
-    for (Pos i = 0; i<f.getNbTuile(); i++)
-        if (f.verifRevendiquable((size_t) i, joueur_num)){
-            // Si la tuile est revendiquable par le joueur
-            mvt += "Revendiquer:";
-            mvt += i;
-            nb_bornes_a_revendiquer++;
-        }
-    mvt += "nb:";
-    mvt += (char) nb_bornes_a_revendiquer;
-    return mvt;
-}
-
-void UITactique::afficherFrontiere_tactique(const Frontiere<class TuileTactique> &f) const{
-
-}
-
-Pos UITactique::getChoixCarte(Main& main){
-
-}
-
-Pos UITactique::getChoixBorne(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num){
-
-}
-
-
-
-
-
-
-
-
-
-

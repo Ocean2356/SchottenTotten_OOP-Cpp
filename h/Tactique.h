@@ -266,27 +266,29 @@ public:
     void demande_force(CarteTroupe& carte);
 private:
 };
+
 class UITactique final{
 public:
     void afficherFrontiere_tactique(const Frontiere<class TuileTactique> &f) const;
     void afficherCote(const TuileTactique &t, size_t cote) const;
     void afficherEtatBorne(const TuileTactique &t, size_t num_borne) const;
-    Pos getChoixCarte(Main& main);
-    Pos getChoixBorne(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
+    Pos getChoixCarte(const Main& main, const vector <int>& cartes_jouables) const;
+    Pos getChoixCarteIa(const Main& main, const vector <int>& cartes_jouables) const;
+    Pos getChoixBorneIa(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const;
+    Pos getChoixBorne(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const;
     Movement getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
-    Movement getChoixBornesARevendiquer( Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
+    Movement getChoixBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
 };
 
 class AgentTactique final: public Agent{
 public:
-    AgentTactique() = default;
-    AgentTactique(size_t taille_main) : main(Main(taille_main)){}
+    AgentTactique(size_t taille_main) : main(Main(taille_main)), nb_cartes_tactiques_jouees(0){}
     AgentTactique(const AgentTactique&) = default;
     AgentTactique& operator=(const AgentTactique&) = default;
 
 
     // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
-    Movement choisirCarteAJouer(const Frontiere<class TuileTactique>& frontiere, NumJoueur joueur_num);
+    Movement choisirCarteAJouer(const Frontiere<class TuileTactique>& frontiere, NumJoueur joueur_num) const;
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
     void jouerCarte(Frontiere<class TuileTactique>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, string nom_carte);
@@ -303,6 +305,7 @@ public:
 private:
     UITactique ui_tactique;
     Main main;  // un agent a une main
+    unsigned int nb_cartes_tactiques_jouees;
 };
 
 template<class Carte, size_t N>
