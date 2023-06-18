@@ -20,7 +20,6 @@ class Tuile;
 class Joueur;
 
 
-enum class Tactique{Troupe, Combat, Ruse};
 enum class JoueurGagnant{aucun, joueur1, joueur2};
 enum class NumJoueur{joueur1, joueur2};
 enum class Combinaison{somme, suite, couleur, brelan, suite_couleur};
@@ -64,7 +63,6 @@ string toString(Force f);
 class Carte{ // classe abstraite Carte
 public:
     virtual string getInfo() const = 0;
-    virtual string getDescription() const = 0;
     virtual bool estTactique() const = 0;
     virtual ~Carte() = default;
 };
@@ -82,12 +80,6 @@ public:
     }
     string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
         return toString(couleur) + toString(force) + ' ';
-    }
-
-    // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    string getDescription() const override{
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Clan : force = " + toString(force) + " Couleur = " + toString(couleur);
     }
     Couleur getCouleur() const { return couleur; }
     Force getForce() const { return force; }
@@ -196,7 +188,7 @@ public:
 
     ~Main() = default;
 private:
-    vector<const Carte*  > cartes;  // vector représentant les cartes de la main d'un joueur
+    vector<const Carte* > cartes;  // vector représentant les cartes de la main d'un joueur
     size_t taille_max;  // par défaut, la main contient au maximum 6 cartes. Ce nombre est modifié pour la partie tactique
     size_t nbCartes = 0;  // initialement, la main est vide
 };
@@ -417,7 +409,9 @@ public:
 private:
     UI ui = UI();
     bool ia;
-    Main main;  // un agent a une main
+    // un agent a une main
+protected:
+    Main main;
 };
 
 

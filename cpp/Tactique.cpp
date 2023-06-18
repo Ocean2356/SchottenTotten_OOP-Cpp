@@ -8,7 +8,7 @@ std::initializer_list<Troupe> Troupes ={Troupe::Joker, Troupe::Espion, Troupe::P
 std::initializer_list<Combat> Combats ={Combat::Colin_Maillard, Combat::Combat_de_Boue };  // liste des cartes combats
 std::initializer_list<Ruse> Ruses ={Ruse::Chasseur_de_tete, Ruse::Stratege, Ruse::Banshee, Ruse::Traitre };  // liste des cartes combats
 
-Defausse* Defausse::instance = nullptr;
+Defausse Defausse::instance = Defausse();
 
 
 // Fonction permettant de retourner une string correspondant à un type de carte tactique troupe donné
@@ -119,11 +119,13 @@ void PremiereTactique::jouerTour(){
             nom.push_back(carte_a_jouer[pos_carte_tactique + 11]);
             if (nom == toString(Ruse::Chasseur_de_tete)){
                 agent.mettre_ChasseurdeTete();
+                agent.getMainModifiable().jouerCarte(pos_carte_a_jouer);  // on retire la carte de la main
                 Defausse::getInstance().ajouterCarte(&agent.getMain().getCarte(pos_carte_a_jouer));
             }
 
             else if (nom == toString(Ruse::Banshee) || nom == toString(Ruse::Stratege) || nom == toString(Ruse::Traitre)){
                 agent.actionStrategeBansheeTraitre(frontiere_tactique, nom, (NumJoueur) agentActive);
+                agent.getMainModifiable().jouerCarte(pos_carte_a_jouer);  // on retire la carte de la main
                 Defausse::getInstance().ajouterCarte(&agent.getMain().getCarte(pos_carte_a_jouer));
             }
             else{  // on devrait pouvoir jouer la carte sur une borne
@@ -155,33 +157,42 @@ void PremiereTactique::jouerTour(){
     }
 
     unsigned int nb_choix = 0;
-
-    if(pioche_normale_non_vide) //il a au moins une carte normale
-        cout << "Entrez " << ++nb_choix << " pour piocher une carte normale\n";
-
-    if(pioche_tactique_non_vide) //il a au moins une carte normale
-        cout << "Entrez " << ++nb_choix << " pour piocher une carte tactique\n";
-    if (nb_choix == 0)
-        cout << "Les deux pioches sont vides, pas de pioche !\n";
+    if (agent.getIa()){
+        if (pioche_normale_non_vide || pioche_tactique_non_vide)
+            choix_pioche = 1;
+        else
+            return;
+    }
     else {
-        cout << "\nDans quel pioche voulez-vous piochez ? \n";
-        bool saisie_ok = false;
-        string saisie;
-        while (!saisie_ok) {
-            getline(cin, saisie);
-            if ((unsigned int) saisie[0] - '0' >= 1 && (unsigned int) saisie[0] - '0' <= nb_choix) {
-                saisie_ok = true;
-                choix_pioche = (int) (unsigned char) saisie[0] - '0';
+        if (pioche_normale_non_vide) //il a au moins une carte normale
+            cout << "Entrez " << ++nb_choix << " pour piocher une carte normale\n";
+
+        if (pioche_tactique_non_vide) //il a au moins une carte normale
+            cout << "Entrez " << ++nb_choix << " pour piocher une carte tactique\n";
+        if (nb_choix == 0) {
+            cout << "Les deux pioches sont vides, pas de pioche !\n";
+            return;
+        } else {
+            cout << "\nDans quel pioche voulez-vous piochez ? \n";
+            bool saisie_ok = false;
+            string saisie;
+            while (!saisie_ok) {
+                getline(cin, saisie);
+                if ((unsigned int) saisie[0] - '0' >= 1 && (unsigned int) saisie[0] - '0' <= nb_choix) {
+                    saisie_ok = true;
+                    choix_pioche = (int) (unsigned char) saisie[0] - '0';
+                }
             }
         }
-        if (choix_pioche == 1 && pioche_normale_non_vide) {
-            // Piocher une nouvelle carte
-            const Carte &carte = piocheNormale.piocher();
-            agent.piocher(carte);
-        } else {
-            const Carte &carte = piocheTactique.piocher();
-            agent.piocher(carte);
-        }
+    }
+
+    if (choix_pioche == 1 && pioche_normale_non_vide) {
+        // Piocher une nouvelle carte
+        const Carte &carte = piocheNormale.piocher();
+        agent.piocher(carte);
+    } else {
+        const Carte &carte = piocheTactique.piocher();
+        agent.piocher(carte);
     }
     agentSuivant();
 }
@@ -359,7 +370,7 @@ Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>&
 void AgentTactique::jouerCarte(Frontiere<class TuileTactique>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, const string& nom_carte){
     if (frontiere.tuiles[pos_borne].cotePlein(joueur_num))
         throw PartieException("La tuile est deja pleine\n");
-    const Carte& c = this->getMain().jouerCarte(pos_carte);  // on récupère la carte à jouer
+    const Carte& c = this->getMainModifiable().jouerCarte(pos_carte);
     auto carte_tactique = dynamic_cast<const CarteTactique*> (&c);
     if (carte_tactique == nullptr){
         frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);  // on place la carte sur la frontière
@@ -373,7 +384,6 @@ void AgentTactique::jouerCarte(Frontiere<class TuileTactique>& frontiere, unsign
         if (nom_carte == toString(Troupe::Joker))
             nb_jokers_joues ++;
         frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);  // on place la carte sur la frontière
-
     }
 
 }
@@ -465,7 +475,7 @@ void AgentTactique::mettre_ChasseurdeTete(){
 
     // Cas où les pioches sont vides
     if(taillePiocheClan==0 && taillePiocheTactique==0) {
-        cout << "Vous ne pouvez piocher aucune carte... (pioches vides)\n";;
+        cout << "Vous ne pouvez piocher aucune carte... (pioches vides)\n";
         return;
     }
 
@@ -587,25 +597,28 @@ void AgentTactique::actionStrategeBansheeTraitre(Frontiere<class TuileTactique>&
 
     for (int i = 0; i < frontiere.getNbTuile(); i++)
         if (!frontiere.tuiles[i].estRevendiquee() &&
-            !frontiere.tuiles[(int) cote].getCartesPosees(cote).empty()) {
+            !frontiere.tuiles[i].getCartesPosees(cote).empty()) {
             // la tuile n'est pas revendiquée et a au moins une carte
             if (tactique_possible) {  // si on peut récupérer une carte tactique, on peut agir sur cette tuile
                 tuiles_jouables.push_back(i);
                 cout << "Entrez : " << ++numTuile << " pour agir sur la tuile" << i + 1 << "\n";
             } else { // sinon (cas du traitre), on vérifie qu'il y a au moins une carte clan de posée de ce côté de la tuile
                 for (auto carte: frontiere.tuiles[i].getCartesPosees(cote)) {
-                    auto carteTactique = dynamic_cast<const CarteTactique *>(carte);
-                    if (carteTactique != nullptr) {
+                    auto carteNormale = dynamic_cast<const CarteNormale *>(carte);
+                    if (carteNormale != nullptr) {
                         tuiles_jouables.push_back(i);
-                        cout << "Entrez : " << i + 1 << " pour agir sur la tuile" << i + 1 << "\n";
+                        cout << "Entrez : " << ++numTuile << " pour agir sur la tuile" << i + 1 << "\n";
                         break;
                     }
                 }
             }
         }
 
-    if (tuiles_jouables.empty())  // on ne peut agir sur aucune borne
+    if (tuiles_jouables.empty()){
+        // on ne peut agir sur aucune borne
         cout << "Vous ne pouvez jouer la carte sur aucune tuile, vous la perdez\n";
+        return;
+    }
     unsigned int choix_borne = 0;
     bool saisie_correcte = false;
     string recup_choix;
@@ -613,18 +626,12 @@ void AgentTactique::actionStrategeBansheeTraitre(Frontiere<class TuileTactique>&
         cout << "Votre Choix : ";
         getline(cin, recup_choix);
         if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= numTuile){
-            choix_borne = (unsigned int) (recup_choix[0] - '0');
-            for (auto& t : tuiles_jouables){
-                if (t == choix_borne){
-                    saisie_correcte = true;
-                    break;
-                }
-            }
+            choix_borne = tuiles_jouables[(unsigned int) (recup_choix[0] - '0') - 1];
+            saisie_correcte = true;
         }
         if (!saisie_correcte)
             cout << "Veuillez entrez un numero d'une borne sur laquelle vous pouvez jouer\n";
     }
-    choix_borne -= 1;
     int cpt = 0;
     for (auto carte: frontiere.tuiles[choix_borne].getCartesPosees(cote)) {
         if (nomTactique == toString(Ruse::Traitre)) {
@@ -632,16 +639,16 @@ void AgentTactique::actionStrategeBansheeTraitre(Frontiere<class TuileTactique>&
             // on récupère uniquement les cartes clans si la carte est un Traitre
             if (carteTactique == nullptr) {
                 indice_carte.push_back(cpt);
-                cout << "Entrez " << cpt + 1 << " pour agir sur la carte " << carte << "\n";
+                cout << "Entrez " << cpt + 1 << " pour agir sur la carte " << *carte << "\n";
             }
         } else{
             indice_carte.push_back(cpt);
-            cout << "Entrez " << cpt + 1 << " pour agir sur la carte " << carte << "\n";
+            cout << "Entrez " << cpt + 1 << " pour agir sur la carte " << *carte << "\n";
         }
         cpt++;
     }
 
-    cout << "Choix de la carte a jouer\n";
+    cout << "Choix de la carte sur laquelle agir\n";
     unsigned int choix_carte = 0;
     while (choix_carte < 1 || choix_carte > cpt){
         cout << "Votre Choix : ";
@@ -651,7 +658,7 @@ void AgentTactique::actionStrategeBansheeTraitre(Frontiere<class TuileTactique>&
     }
     --choix_carte;
     const Carte* c = frontiere.tuiles[choix_borne].getCartesPosees(cote)[indice_carte[choix_carte]];
-    frontiere.tuiles[choix_borne].removeCarte(c, (int) num_joueur);
+    frontiere.tuiles[choix_borne].removeCarte(c, (int) cote);
 
     // il reste à déplacer ou défausser la carte
     unsigned int choix_action;
@@ -663,17 +670,17 @@ void AgentTactique::actionStrategeBansheeTraitre(Frontiere<class TuileTactique>&
         choix_action = 0;
     }
     else{  // stratège
-        cout << "Quelle action souhaitez-vous faire ? (0:défausser, 1:placer sur tuile)\n";
+        cout << "Quelle action souhaitez-vous faire ? (0:defausser, 1:placer sur tuile)\n";
         saisie_correcte = false;
         while (!saisie_correcte){
             cout << "Votre choix : ";
             getline(cin, recup_choix);
             if ((unsigned int) (recup_choix[0] - '0') == 0 || (unsigned int) (recup_choix[0] - '0') == 1){
                 choix_action = (unsigned int) (recup_choix[0] - '0');
+                saisie_correcte = true;
             }
         }
     }
-
     if (choix_action == 0) {
         Defausse::getInstance().ajouterCarte(c);
     } else if (choix_action == 1) {

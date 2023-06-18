@@ -264,7 +264,7 @@ Movement UITactique::getChoixBornesARevendiquer(Frontiere<class TuileTactique>& 
             } else{
                 // sinon, on considère que le joueur s'est trompé
                 // et qu'il n'essayera pas de revendiquer d'autres bornes pour ce tour
-                cout << "La borne " << choix_borne_a_revendiquer << " ne peut pas etre revendiquee";
+                cout << "La borne " << choix_borne_a_revendiquer << " ne peut pas etre revendiquee\n";
                 continuer = 0;
             }
 

@@ -47,11 +47,6 @@ public:
     string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
 
 
-    // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    string getDescription() const override {
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique :  "  + getNom() + "\n";
-    }
     string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
         return nom;
     }
@@ -134,7 +129,7 @@ public:
     }
 
     static Defausse& getInstance() {
-        return *instance;
+        return instance;
     }
 
     ~Defausse() {
@@ -145,7 +140,7 @@ public:
 
 private:
     vector<const Carte*> cartes;
-    static Defausse* instance;
+    static Defausse instance;
 };
 
 class UITactique final{
@@ -169,9 +164,8 @@ public:
     AgentTactique(size_t taille_main) : Agent(taille_main), nb_cartes_tactiques_jouees(0), nb_jokers_joues(0){}
     AgentTactique(const AgentTactique&) = default;
     AgentTactique& operator=(const AgentTactique&) = default;
-
+    Main& getMainModifiable() { return this->main;}
     unsigned int getNbCartesTactiquesJouees() const { return nb_cartes_tactiques_jouees;}
-
 
     void mettre_ChasseurdeTete();
     void actionStrategeBansheeTraitre(Frontiere<class TuileTactique>& frontiere, string& nomTactique, NumJoueur num_joueur);
