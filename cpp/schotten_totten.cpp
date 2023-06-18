@@ -161,7 +161,8 @@ void Jeu::commencerJeu(){
         joueurs[i] = Joueur(nom, est_ia);
         if (!est_ia)
             only_ia = false;
-        joueurs[i].setIa(est_ia);
+        joueurs[i].getAgent().setIa(est_ia);
+        joueurs[i].getAgentTactique().setIa(est_ia);
     }
     this->setIaPlayers(only_ia);
 }
@@ -202,7 +203,6 @@ void Jeu::jouerPartie(Edition edition, Variante variante){
     // Détermination de l'ordre de jeu des joueurs et initialisations
     Ordre ordre = determinerOrdre();
     partie->commencer(ordre);
-
     // déroulement de la partie tour par tour jusqu'à ce que la partie soit terminée
     while (!partie->testerFin()) {
         partie->jouerTour();

@@ -78,7 +78,6 @@ bool Tuile::verifSuite(NumJoueur num_joueur){
     ordonnerCartes(num_joueur);  // on trie les cartes de ce côté de la tuile
 
     std::vector<const CarteNormale*> cartes_normales;
-    cartes_normales.reserve(nb_pleine);
 
     for (size_t i = 0; i < nb_pleine; i++) {
         const Carte* carte = cartes_posees[static_cast<int>(num_joueur)][i];

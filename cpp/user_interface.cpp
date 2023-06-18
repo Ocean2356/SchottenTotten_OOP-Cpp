@@ -10,7 +10,7 @@ non définies dans partie.h et tactique.h pour les classe UI et UITactique
 
 
 void UI::afficherFrontiere(const Frontiere<class Tuile>& f) const{
-    Pos nb_tuile = (char) f.nb_tuile;
+    Pos nb_tuile = (char) f.getNbTuile();
     cout
             << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
     // Affichage des cartes des tuiles du côté du premier joueur
@@ -20,7 +20,6 @@ void UI::afficherFrontiere(const Frontiere<class Tuile>& f) const{
 
     // Affichage de l'état des tuiles (le numéro du joueur qui l'a revendiquée ou le numéro de la tuile si elle n'est pas revendiquée)
     for (size_t i = 0; i < nb_tuile; i++)
-//        f.tuiles[i].afficherEtatBorne(i + 1);
         afficherEtatBorne(f.tuiles[i], i+1);
     cout << "\n";
 
@@ -62,7 +61,7 @@ void UI::afficherEtatBorne(const Tuile &t, size_t num_borne) const{
 Pos UI::getChoixCarte(Main& main) {
     string recup_choix;
     cout << "Choix de la carte a jouer\n";
-    for (Pos i = 0; i < main.getNbCartes(); i++)
+    for (int i = 0; i < main.getNbCartes(); i++)
         cout << "Entrez " << i + 1 << " pour jouer la carte " << main.getCarte(i) << "\n";
     Pos choix_carte = -1;
     while (choix_carte < 1 || choix_carte > main.getNbCartes()){
@@ -79,7 +78,7 @@ Pos UI::getChoixCarteIa(Main& main) {
     // Génération d'un nombre aléatoire entre 0 et nbBornesJouables - 1
     std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> distrib{0, (int) main.getNbCartes() - 1};
-    for (Pos i = 0; i < main.getNbCartes(); i++)
+    for (int i = 0; i < main.getNbCartes(); i++)
         cout << "Carte " << i + 1 << " : " << main.getCarte(i) << "\n";
     return (char) distrib(random_eng);
 }
@@ -201,7 +200,7 @@ Movement UI::getChoixBornesARevendiquerIa( Frontiere<class Tuile>& f, NumJoueur 
     Movement mvt;
     Pos nb_bornes_a_revendiquer = 0;
 
-    for (Pos i = 0; i<f.getNbTuile(); i++)
+    for (Pos i = 0; (int)i<f.getNbTuile(); i++)
         if (f.verifRevendiquable((size_t) i, joueur_num, tab)){
             // Si la tuile est revendiquable par le joueur
             mvt += "Revendiquer:";
@@ -213,7 +212,7 @@ Movement UI::getChoixBornesARevendiquerIa( Frontiere<class Tuile>& f, NumJoueur 
     return mvt;
 }
 
-Movement UITactique::getChoixBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num){
+Movement UITactique::getChoixBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const{
     Movement mvt;
     afficherFrontiere_tactique(f);
 
@@ -277,11 +276,11 @@ Movement UITactique::getChoixBornesARevendiquer(Frontiere<class TuileTactique>& 
 }
 
 
-Movement UITactique::getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>& f, NumJoueur joueur_num){
+Movement UITactique::getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const{
     Movement mvt;
     Pos nb_bornes_a_revendiquer = 0;
 
-    for (Pos i = 0; i<f.getNbTuile(); i++)
+    for (Pos i = 0; (int) i<f.getNbTuile(); i++)
         if (f.verifRevendiquable((size_t) i, joueur_num)){
             // Si la tuile est revendiquable par le joueur
             mvt += "Revendiquer:";
@@ -294,7 +293,7 @@ Movement UITactique::getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>
 }
 
 void UITactique::afficherFrontiere_tactique(const Frontiere<class TuileTactique> &f) const{
-    Pos nb_tuile = (char) f.nb_tuile;
+    Pos nb_tuile = (char) f.getNbTuile();
     cout
             << "\n----------------------------------------------------------------Affichage de la frontiere----------------------------------------------------------------\n";
     // Affichage des cartes des tuiles du côté du premier joueur
@@ -333,7 +332,7 @@ void UITactique::afficherCote(const TuileTactique &t, size_t cote) const{
 // Méthode permettant d'afficher l'état d'une tuile
 void UITactique::afficherEtatBorne(const TuileTactique &t, size_t num_borne) const{
     if (t.carte_posee_centre != nullptr)
-        t.carte_posee_centre->getInfo();
+        cout << " " << t.carte_posee_centre << " ";
     else
         cout << "      ";  // utilisé pour centrer l'affichage
     if (t.revendiquee == TuileRevendiquee::revendiquee_joueur1)
@@ -346,34 +345,34 @@ void UITactique::afficherEtatBorne(const TuileTactique &t, size_t num_borne) con
 }
 
 
-Pos UITactique::getChoixCarte(const Main& main, const vector <int>& cartes_jouables) const{
+Pos UITactique::getChoixCarte(const AgentTactique& agent, const vector <int>& cartes_jouables) const{
     string recup_choix;
     cout << "Choix de la carte a jouer\n";
-    Pos cpt = 1;
-    for (Pos i = 0; i < main.getNbCartes(); i++){
+    int cpt = 0;
+    for (int i = 0; i < agent.getMain().getNbCartes(); i++){
         for (auto j : cartes_jouables){
             if (j == i)
-                cout << "Entrez " << cpt++ << " pour jouer la carte " << main.getCarte(i) << "\n";
+                cout << "Entrez " << ++cpt << " pour jouer la carte " << agent.getMain().getCarte(i) << "\n";
         }
     }
-
-    Pos choix_carte = -1;
+    unsigned int choix_carte = 0;
+    getline(cin, recup_choix);
     while (choix_carte < 1 || choix_carte > cpt){
         cout << "Votre Choix : ";
-        cin >> recup_choix;
-        if ((Pos) (recup_choix[0] - '0') >= 1 && (Pos) (recup_choix[0] - '0') <= cpt)
-            choix_carte = (Pos) (recup_choix[0] - '0');
+        getline(cin, recup_choix);
+        if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= cpt)
+            choix_carte = (unsigned int) (recup_choix[0] - '0');
     }
     --choix_carte;
     return (char) cartes_jouables[choix_carte];
 }
 
-Pos UITactique::getChoixCarteIa(const Main& main, const vector<int>& cartes_jouables) const{
+Pos UITactique::getChoixCarteIa(const AgentTactique& agent, const vector<int>& cartes_jouables) const{
     // Génération d'un nombre aléatoire entre 0 et nbBornesJouables - 1
     std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> distrib{0, (int) cartes_jouables.size() - 1};
-    for (Pos i = 0; i < main.getNbCartes(); i++)
-        cout << "Carte " << i + 1 << " : " << main.getCarte(i) << "\n";
+    for (Pos i = 0; i < agent.getMain().getNbCartes(); i++)
+        cout << "Carte " << (int) (i + 1) << " : " << agent.getMain().getCarte(i) << "\n";
     return (char) cartes_jouables[distrib(random_eng)];
 }
 
@@ -415,6 +414,55 @@ Pos UITactique::getChoixBorneIa(const Frontiere<class TuileTactique>& f, NumJoue
     vector <int> borne_jouable;
     for (size_t i = 0; i < f.getNbTuile(); i++){
         if (!f.tuiles[i].cotePlein(joueur_num) && !f.tuiles[i].estRevendiquee()){
+            borne_jouable.push_back((int) i);
+        }
+    }
+    if (borne_jouable.empty())
+        // on ne peut jouer sur aucune borne (pourrait arriver en variante tactique)
+        return -1;
+    // Génération d'un nombre aléatoire entre 0 et nbBornesJouables - 1
+    std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<int> distrib{0, (int) borne_jouable.size() - 1};
+    return (char) borne_jouable[distrib(random_eng)];
+}
+
+Pos UITactique::getChoixBorneCarteCentre(const Frontiere<class TuileTactique>& f) const{
+    string recup_choix;
+    cout << "Vous pouvez jouer sur les bornes suivantes: \n";
+    vector <int> borne_jouable;
+    for (size_t i = 0; i < f.getNbTuile(); i++){
+        if (!f.tuiles[i].centrePlein() && !f.tuiles[i].estRevendiquee()){
+            borne_jouable.push_back((int) i+1);
+            cout << "Entrez " << i + 1 << " pour jouer sur la borne numero " << i + 1 << "\n";
+        }
+    }
+    if (borne_jouable.empty())
+        // on ne peut jouer sur aucune borne
+        return -1;
+    unsigned int choix_borne = 0;
+    bool saisie_correcte = false;
+    while (!saisie_correcte){
+        cout << "Votre Choix : ";
+        cin >> recup_choix;
+        if ((unsigned int) (recup_choix[0] - '0') >= 1 && (unsigned int) (recup_choix[0] - '0') <= 9){
+            choix_borne = (unsigned int) (recup_choix[0] - '0');
+            for (auto& b : borne_jouable){
+                if (b == choix_borne){
+                    saisie_correcte = true;
+                    break;
+                }
+            }
+        }
+        if (!saisie_correcte)
+            cout << "Veuillez entrez un numero d'une borne sur laquelle vous pouvez jouer\n";
+    }
+    return (char) --choix_borne;
+}
+
+Pos UITactique::getChoixBorneCarteCentreIa(const Frontiere<class TuileTactique>& f) const{
+    vector <int> borne_jouable;
+    for (size_t i = 0; i < f.getNbTuile(); i++){
+        if (!f.tuiles[i].centrePlein() && !f.tuiles[i].estRevendiquee()){
             borne_jouable.push_back((int) i);
         }
     }

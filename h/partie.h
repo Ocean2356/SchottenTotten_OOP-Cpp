@@ -16,14 +16,17 @@ représentant les cartes, la pioche, la main, les tuiles, la frontière, les age
 #include <random>
 #include <chrono>
 
-class Joueur;
 class Tuile;
+class Joueur;
+
 
 enum class Tactique{Troupe, Combat, Ruse};
 enum class JoueurGagnant{aucun, joueur1, joueur2};
 enum class NumJoueur{joueur1, joueur2};
 enum class Combinaison{somme, suite, couleur, brelan, suite_couleur};
 enum class TuileRevendiquee{non_revendiquee, revendiquee_joueur1, revendiquee_joueur2};
+
+
 
 using namespace std;
 using Ordre = array<Joueur*  , 2>; // ordre des joueurs qui jouent
@@ -73,6 +76,10 @@ public:
     CarteNormale(Couleur _couleur, Force _force) : couleur(_couleur), force(_force){}
     CarteNormale(const CarteNormale& c) = default;
     CarteNormale& operator=(const CarteNormale& c) = default;
+    const CarteNormale& operator=(const CarteNormale& c) const {
+        const CarteNormale& c2 = c;
+        return c2;
+    }
     string getInfo() const override{  // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
         return toString(couleur) + toString(force) + ' ';
     }
@@ -107,14 +114,14 @@ public:
     }
 
     // Méthode permettant d'échanger deux cartes de la pioche
-    void swapCartes(Carte& c1, Carte& c2){
+    void swapCartes(const Carte& c1, const Carte& c2) const{
         Carte tmp = c1;
         c1 = c2;
         c2 = tmp;
     }
 
     // Méthode permettant de piocher une carte
-    virtual const Carte& piocher(){
+    virtual const Carte& piocher() {
         if (estVide())
             throw PartieException("La pioche est vide");
         try{
@@ -123,12 +130,11 @@ public:
             std::uniform_int_distribution<size_t> distrib{0, nbCartes - 1};
             size_t x = distrib(random_eng);
             // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
-
             toString(cartes[x]->getCouleur());
             toString(cartes[x]->getForce());
             toString(cartes[nbCartes - 1]->getCouleur());
             toString(cartes[nbCartes - 1]->getForce());
-            swapCartes(*cartes[x], *cartes[--nbCartes]);
+            swapCartes((*cartes[x]), *cartes[--nbCartes]);
             return *cartes[nbCartes];  // on retourne la carte que l'on vient de "supprimer"
         }catch(PartieException& e){
             cout << "Erreur "<< e.getInfo() << " lors de la pioche";
@@ -144,19 +150,16 @@ public:
         }
 
     };
-
-    void placerDessous(const Carte& carte){  // Méthode permettant de placer une carte en dessous de la pioche
-        // TODO A REPRENDRE, nécessaire pour implémenter la version tactique, utiliser l'attribut cartesDessous
-        cartes[cartes.size()] = carte;
+    void placerDessous(const Carte* carte){  // Méthode permettant de placer une carte en dessous de la pioche
+        cartes[nbCartes++] = carte;
     };
-
     ~Pioche(){  // destructeur qui désalloue les cartes de la pioche
         for (size_t i = 0; i < N; i++){
             delete cartes[i];
         }
     }
 protected:
-    array<Carte*, N> cartes;  // array de N cartes
+    array<const Carte*, N> cartes;  // array de N cartes
     size_t nbCartes;  // nombre de cartes piochables
     // vector<Carte> cartesDessous; TODO pour la version tactique (+ mettre une carte aléatoire en dessous de la pioche initialement)
 };
@@ -172,7 +175,7 @@ public:
     size_t getNbCartes() const{ return nbCartes; }
     size_t getTailleMax() const{ return taille_max; }
     const Carte& getCarte(size_t i) const{ return *cartes[i]; }
-
+    const Carte& operator[](size_t i) const{ return *cartes[i]; }
     // Méthode permettant de jouer une carte de la main
     const Carte& jouerCarte(unsigned int i){
         const Carte& carte = *cartes[i];
@@ -186,10 +189,15 @@ public:
         cartes.push_back(&carte);  // ajout de la carte dans la main
         nbCartes++;  // on incrémente le nombre de cartes de la main
     }
+
+    vector<const Carte*>& getCartes() {
+        return cartes;
+    }
+
     ~Main() = default;
 private:
     vector<const Carte*  > cartes;  // vector représentant les cartes de la main d'un joueur
-    size_t taille_max = 6;  // par défaut, la main contient au maximum 6 cartes. Ce nombre est modifié pour la partie tactique
+    size_t taille_max;  // par défaut, la main contient au maximum 6 cartes. Ce nombre est modifié pour la partie tactique
     size_t nbCartes = 0;  // initialement, la main est vide
 };
 
@@ -200,7 +208,6 @@ public:
     Tuile(const Tuile& t) = delete;
     Tuile& operator=(const Tuile& t) = delete;
     TuileRevendiquee getRevendiquee() const{ return revendiquee; }
-
 
     // Méthode vérifiant si le côté d'un joueur est plein
     bool cotePlein(NumJoueur joueur_num) const{ return cartes_posees[(int) joueur_num].size() == nb_pleine; }
@@ -405,6 +412,7 @@ public:
         frontiere.tuiles[num_borne].revendiquer(joueur_num);
     }
     Main getMain() const{ return main; }
+
     virtual ~Agent() = default;
 private:
     UI ui = UI();
@@ -412,26 +420,6 @@ private:
     Main main;  // un agent a une main
 };
 
-
-class Joueur final{  // classe représentant un joueur du jeu
-public:
-    Joueur() = default;
-    Joueur(const string& n, const bool& est_ia) : nom(n), ia(est_ia){}
-    Joueur(const Joueur& j) = default;
-    Joueur& operator=(const Joueur& j) = default;
-    unsigned int getScore() const{ return score; }
-    void setScore(unsigned int points){ score += points; }
-    const string& getNom() const{ return nom; }
-    const Agent& getAgent() const{ return agent; }
-    void setIa(const bool& est_ia) {agent.setIa(est_ia);}
-    ~Joueur() = default;
-
-private:
-    string nom;
-    unsigned int score = 0;
-    bool ia;
-    Agent agent;  // un joueur dispose d'un agent
-};
 
 class Partie{  // classe abstraite permettant de représenter une partie
 public:
@@ -461,8 +449,10 @@ public:
     // Méthode permettant d'initialiser les agents et les mains pour commencer une partie
     void commencer(Ordre ordre) final{
         initierAgents(ordre);
+        initierPiocheNormale();
         initierMains();
     }
+    void initierPiocheNormale();  // initialisation de la pioche normale
 
     // Méthode permettant de mettre à jour l'agent actif
     void agentSuivant(){
@@ -489,7 +479,6 @@ public:
     PremiereNormale();
     // Méthode permettant de jouer un tour dans son intégralité (choix de la carte à jouer, revendiquer une ou plusieurs bornes, piocher)
     void jouerTour() override;
-    void initierPiocheNormale();  // initialisation de la pioche normale
     ~PremiereNormale() = default;
 private:
     static const int NMAIN = 6;  // 6 cartes dans la main dans cette variante

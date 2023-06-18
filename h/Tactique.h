@@ -8,11 +8,10 @@
 #include <string>
 
 using namespace std;
-
+class AgentTactique;
 
 
 // caractéristiques
-//enum class Tactique{Troupe, Combat, Ruse};
 enum class Troupe{Joker,Espion, Porte_Bouclier};
 enum class Combat{Colin_Maillard, Combat_de_Boue};
 enum class Ruse{Chasseur_de_tete, Stratege, Banshee, Traitre};
@@ -39,6 +38,11 @@ class CarteTactique : public Carte{  // CarteTactique, classe héritant de la cl
 public:
     explicit CarteTactique(const string& n) : nom(n){}
     CarteTactique() = default;
+    CarteTactique& operator=(const CarteTactique&) = default;
+    const CarteTactique& operator=(const CarteTactique& c) const {
+        const CarteTactique& c2 = c;
+        return c2;
+    }
     bool estTactique() const override {return true;}
     string getNom() const { return nom;} // méthode utilisée lors de l'affichage d'une carte sur un flux ostream
 
@@ -59,62 +63,6 @@ private:
 };
 
 
-/*
-// Fonction permettant de retourner une string correspondant à un type de carte tactique donné
-string toString(Tactique t) {
-    switch (t) {
-        case Tactique::Troupe:
-            return "Troupe";
-        case Tactique::Combat:
-            return "Combat";
-        case Tactique::Ruse:
-            return "Ruse";
-        default:
-            throw PartieException("Type de carte tactique inconnue");
-    }
-}
-
-class CarteTactique : public Carte{  // CarteTactique, classe héritant de la classe abstraite carte
-public:
-    CarteTactique(const Tactique& tac) : tactique(tac){}
-    CarteTactique() = default;
-    bool estTactique() const override {return true;}
-    Tactique getTactique() const {return tactique;}
-
-    // méthode utilisée pour informer l'utilisateur des effets d'une carte
-    string getDescription() const override {
-        // TODO appel de la méthode dans un tour de jeu si l'utilisateur souhaite se renseigner sur une carte
-        return "Tactique :  "  + toString(tactique) + "\n";
-    }
-
-    virtual ~CarteTactique() = default;
-private:
-    Tactique tactique;
-};*/
-
-
-class CarteTroupe : public CarteNormale, public CarteTactique{  // classe Troupe, héritant de la classe CarteTactique
-public:
-
-    CarteTroupe(const string& nom, Force force, Couleur couleur, Troupe t) : CarteNormale(couleur,force), CarteTactique(nom), troupe(t) {};
-
-    Troupe getTroupe() const { return troupe; }
-
-    CarteTroupe mettre_Joker();
-    CarteTroupe mettre_PorteBouclier();
-    CarteTroupe mettre_Espion();
-
-    void afficherCarte() const;
-    void afficherDosCarte() const { cout << "| Tactique |"; }
-
-private:
-    Troupe troupe;
-
-};
-
-class CarteCombat;  // Déclaration avancée de la classe CarteCombat
-
-
 class TuileTactique :  public Tuile{    // classe TuileTactique, héritant de la classe Tuile
 public:
     TuileTactique() : Tuile(), carte_posee_centre(nullptr) {}
@@ -128,93 +76,55 @@ public:
     // permet de vérifier qu'un joueur peut revendiquer une tuile
     bool verifRevendiquable(NumJoueur num_joueur);
 
+    Couleur demandeCouleur() const;
+    Force demandeForce(unsigned int contrainte) const;
     void placerCarteCentre(const CarteTactique* c){
         if (centrePlein())
-            throw PartieException("Le centre de la tuile est deja pleine\n");
+            throw PartieException("Le centre de la tuile est deja rempli\n");
         carte_posee_centre = c;
-        incr_nb_pleine();
     }
-    unsigned int getNbBorne() const { return nb_borne; }
-    void incr_nb_pleine(){ nb_pleine++; }
+    void incr_nb_pleines() { this->nb_pleine++;}
+    void removeCarte(const Carte* carte, int cote) {
+        for (auto it = cartes_posees[cote].begin(); it != cartes_posees[cote].end(); ++it) {
+            if (*it == carte) {
+                cartes_posees[cote].erase(it);
+                break;
+            }
+        }
+    }
+
+    vector<const Carte*> getCartesPosees(NumJoueur num_joueur) const{
+        return cartes_posees[(int) num_joueur];
+    }
 private:
+    // permet de vérifier que toutes les cartes d'un côté de la tuile ont la même couleur
+    bool verifMemeCouleur(NumJoueur num_joueur, const vector <Couleur>& coul) const;
+
+    // permet de vérifier que toutes les cartes d'un côté de la tuile ont la même force
+    bool verifMemeForce(NumJoueur num_joueur, vector <Force>& f) const;
+
+    // Méthode appelée par verifSuite permettant de trier les cartes en fonction de la force d'un côté de la tuile
+    void ordonnerCartes(NumJoueur num_joueur, vector <Force>& f);
+
+    // permet de vérifier que les cartes d'un côté de la tuile forment une suite
+    bool verifSuite(NumJoueur num_joueur, vector <Force>& f);
+
+    // permet de sommer la force de toutes les cartes d'un côté de la tuile
+    unsigned int getSomme(NumJoueur num_joueur, vector <Force>& f) const;
+
+    Combinaison determinerCombinaison(NumJoueur num_joueur, const vector <Couleur>& coul, vector <Force>& f);
     friend class UITactique;
-    static const unsigned int nb_tuile = 9; // le nombre de tuiles vaut 9 pour la première édition // TODO changer pour pouvoir gérer la deuxième édition (7 tuiles)
-    array<Tuile, nb_tuile> tuiles;  // représente l'ensemble des tuiles
-    const CarteTactique* carte_posee_centre;  // A implémenter pour la version tactique
-    unsigned int nb_borne;
+    const CarteTactique* carte_posee_centre;
 };
 
-class CarteCombat : public CarteTactique {  // classe Combat, héritant de la classe CarteTactique
-public:
-    CarteCombat(const string& nom, Combat c) : CarteTactique(nom), combat(c){};
-
-    void mettre_ColinMaillard(TuileTactique* t) const {
-        const CarteTactique* carte_tactique = dynamic_cast<const CarteTactique*>(this);
-        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_tactique);
-        t->placerCarteCentre(carte_combat);
-    }
-
-    void mettre_CombatdeBoue(TuileTactique* t) const {
-        const CarteTactique* carte_tactique = dynamic_cast<const CarteTactique*>(this);
-        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(carte_tactique);
-        t->placerCarteCentre(carte_combat);
-    }
-    void afficherCarte()const;
-    void afficherDosCarte()const {
-        cout << "| Tactique |";
-    }
-    string getNom() const { return nom; }
-    Combat getCombat() const { return combat; }
-
-private:
-    Combat combat;
-    const string nom = toString(combat);
-};
-
-
-
-class CarteRuse : public CarteTactique {  // classe Ruse, héritant de la classe CarteTactique
-public:
-    CarteRuse(const string& nom, Ruse r) : CarteTactique(nom), ruse(r) {};
-
-    string getNom() const { return nom; }
-    Ruse getRuse() const { return ruse; }
-
-
-    static void mettre_ChasseurdeTete() ;
-    static void mettre_Stratege() ;
-    static void mettre_Banshee() ;
-    static void mettre_Traitre() ;
-
-    void afficherCarte()const;
-    void afficherDosCarte()const { cout << "| Tactique |";}
-
-private:
-    Ruse ruse;
-    const string nom = toString(ruse);
-};
-
-
-
-//class Defausse : public Pioche {  // classe Defausse, héritant de la classe Pioche
-class Defausse {  // classe Defausse, héritant de la classe Pioche
+class Defausse {
 public:
     Defausse() = default;
     Defausse(const Defausse& d) = default;
     Defausse& operator=(const Defausse& d) = default;
 
-    void ajouterCarte(Carte* c) {
-        if (cartes.size() >= cartes.max_size()) {
-            cout << "La defausse est pleine" << endl;
-            return;
-        }
-        if (c->estTactique()) {
-            CarteNormale* carteNormale = static_cast<CarteNormale*>(c);
-            cartes[cartes.size() - 1] = new CarteNormale(carteNormale->getCouleur(), carteNormale->getForce());
-        } else {
-            CarteTactique* carteTactique = static_cast<CarteTactique*>(c);
-            cartes[cartes.size() - 1] = new CarteTactique(carteTactique->getNom());
-        }
+    void ajouterCarte(const Carte* c) {
+        cartes.push_back(c);
     }
 
     void afficherDefausse() const {
@@ -223,14 +133,8 @@ public:
         }
     }
 
-    void setCarte(size_t n, Carte* c) {
-        if (c->estTactique()) {
-            CarteNormale* carteNormale = static_cast<CarteNormale*>(c);
-            cartes[n] = new CarteNormale(carteNormale->getCouleur(), carteNormale->getForce());
-        } else {
-            CarteTactique* carteTactique = static_cast<CarteTactique*>(c);
-            cartes[n] = new CarteTactique(carteTactique->getNom());
-        }
+    static Defausse& getInstance() {
+        return *instance;
     }
 
     ~Defausse() {
@@ -240,31 +144,8 @@ public:
     }
 
 private:
-    array<Carte*, 6> cartes;
-};
-
-class Controleur {
-public:
-    virtual void afficherEtatBorne(size_t num_borne) const {
-        // Cette méthode est appelée par Frontiere::afficherFrontiere()
-        cout << "      ";  // utilisé pour centrer l'affichage
-        TuileTactique tuile; // Création d'un objet TuileTactique
-        const CarteCombat* carte_combat = dynamic_cast<const CarteCombat*>(tuile.getCartePoseeCentre());
-        if (carte_combat != nullptr) {
-            carte_combat->afficherCarte();
-        }
-        cout << "     |";  // utilisé pour centrer l'affichage
-    }
-
-private:
-
-};
-
-class Affichage: public CarteTactique{ // classe Affichage, héritant de la classe CarteTactique
-public:
-    void demande_couleur(CarteTroupe& carte);
-    void demande_force(CarteTroupe& carte);
-private:
+    vector<const Carte*> cartes;
+    static Defausse* instance;
 };
 
 class UITactique final{
@@ -272,28 +153,42 @@ public:
     void afficherFrontiere_tactique(const Frontiere<class TuileTactique> &f) const;
     void afficherCote(const TuileTactique &t, size_t cote) const;
     void afficherEtatBorne(const TuileTactique &t, size_t num_borne) const;
-    Pos getChoixCarte(const Main& main, const vector <int>& cartes_jouables) const;
-    Pos getChoixCarteIa(const Main& main, const vector <int>& cartes_jouables) const;
+    Pos getChoixCarte(const AgentTactique& agent, const vector <int>& cartes_jouables) const;
+    Pos getChoixCarteIa(const AgentTactique& agent, const vector <int>& cartes_jouables) const;
     Pos getChoixBorneIa(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const;
     Pos getChoixBorne(const Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const;
-    Movement getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
-    Movement getChoixBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
+    Pos getChoixBorneCarteCentreIa(const Frontiere<class TuileTactique>& f) const;
+    Pos getChoixBorneCarteCentre(const Frontiere<class TuileTactique>& f) const;
+    Movement getChoixBornesARevendiquerIa(Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const;
+    Movement getChoixBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num) const;
 };
 
 class AgentTactique final: public Agent{
 public:
     AgentTactique() = default;
-    AgentTactique(size_t taille_main) : main(Main(taille_main)), nb_cartes_tactiques_jouees(0){}
+    AgentTactique(size_t taille_main) : Agent(taille_main), nb_cartes_tactiques_jouees(0), nb_jokers_joues(0){}
     AgentTactique(const AgentTactique&) = default;
     AgentTactique& operator=(const AgentTactique&) = default;
 
     unsigned int getNbCartesTactiquesJouees() const { return nb_cartes_tactiques_jouees;}
 
+
+    void mettre_ChasseurdeTete();
+    void actionStrategeBansheeTraitre(Frontiere<class TuileTactique>& frontiere, string& nomTactique, NumJoueur num_joueur);
+
+    void mettre_ColinMaillard(TuileTactique& t, const CarteTactique* c) const {
+        t.placerCarteCentre(c);
+    }
+
+    void mettre_CombatdeBoue(TuileTactique& t, const CarteTactique* c) const {
+        t.placerCarteCentre(c);
+        t.incr_nb_pleines();
+    }
     // Méthode permettant la saisie par l'utilisateur d'une carte à jouer
     Movement choisirCarteAJouer(const Frontiere<class TuileTactique>& frontiere, NumJoueur joueur_num, unsigned int nb_cartes_tactiques_jouees_autre_joueur);
 
     // Méthode permettant de jouer une carte dont la position dans la main est donnée sur une frontière
-    void jouerCarte(Frontiere<class TuileTactique>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, string nom_carte);
+    void jouerCarte(Frontiere<class TuileTactique>& frontiere, unsigned int pos_carte, size_t pos_borne, NumJoueur joueur_num, const string& nom_carte);
 
     // Méthode permettant la saisie par l'utilisateur d'une ou plusieurs bornes à revendiquer
     Movement choisirBornesARevendiquer(Frontiere<class TuileTactique>& f, NumJoueur joueur_num);
@@ -306,8 +201,8 @@ public:
     ~AgentTactique() = default;
 private:
     UITactique ui_tactique;
-    Main main;  // un agent a une main
     unsigned int nb_cartes_tactiques_jouees;
+    unsigned int nb_jokers_joues;
 };
 
 template<class Carte, size_t N>
@@ -323,16 +218,38 @@ public:
         std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
         std::uniform_int_distribution<size_t> distrib{0, this->nbCartes - 1};
         size_t x = distrib(random_eng);
+
         // On "supprime" la carte piochée, en l'échangeant avec la dernière carte de la pioche et en décrementant le nombre de cartes piochable
-        this->swapCartes(*this->cartes[x], *this->cartes[--this->nbCartes]);
+        this->nbCartes --;
+        this->swapCartes(*this->cartes[x], *this->cartes[this->nbCartes]);
         return *this->cartes[this->nbCartes];  // on retourne la carte que l'on vient de "supprimer"
     }
 
-    void setCarteTactique(size_t n,string nom) {
+    void setCarteTactique(size_t n, const string& nom) {
         this->cartes[n] = new CarteTactique(nom);
     }
 };
 
+class Joueur final{  // classe représentant un joueur du jeu
+public:
+    Joueur() = default;
+    Joueur(const string& n, const bool& est_ia) : nom(n), ia(est_ia){}
+    Joueur(const Joueur& j) = default;
+    Joueur& operator=(const Joueur& j) = default;
+    unsigned int getScore() const{ return score; }
+    void setScore(unsigned int points){ score += points; }
+    const string& getNom() const{ return nom; }
+    Agent& getAgent() { return agent; }
+    AgentTactique& getAgentTactique() { return agent_tactique; }
+    ~Joueur() = default;
+
+private:
+    string nom;
+    unsigned int score = 0;
+    bool ia;
+    Agent agent;  // un joueur dispose d'un agent
+    AgentTactique agent_tactique;
+};
 
 // classe correspondant à la variante Tactique de la première édition de Schotten-Totten
 class PremiereTactique final: public Premiere{
@@ -342,9 +259,6 @@ public:
     void jouerTour() override;
     void initierPiocheTactique();  // initialisation de la pioche tactique
     ~PremiereTactique() = default;
-    void setCarteTactique(size_t n, string& nom) {
-        piocheTactique.setCarteTactique(n, nom);
-    }
 
     static const int NCARTETACTIQUE = 10;
 private:
@@ -357,5 +271,7 @@ private:
     // Méthode permettant d'initialiser les mains (appelée par la méthode Premiere::commencer)
     void initierMains() override;
 };
+
+
 
 #endif //TACTIQUE_H

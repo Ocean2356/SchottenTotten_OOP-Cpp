@@ -7,4 +7,4 @@ aux_source_directory(./h h_srcs)
 
 
 
-add_executable(main ${cpp_srcs} ${h_srcs})
+add_executable(main ${cpp_srcs} ${h_srcs} h/joueur.h)

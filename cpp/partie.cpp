@@ -7,6 +7,7 @@ et méthodes déclarées mais non définies dans partie.h (sauf pour les classe 
 
 
 #include "../h/partie.h"
+#include "../h/tactique.h"
 
 std::initializer_list<Couleur> Couleurs ={Couleur::Rouge, Couleur::Marron, Couleur::Jaune, Couleur::Vert,
                                            Couleur::Bleu, Couleur::Violet};  // liste des couleurs
@@ -130,7 +131,7 @@ Resultat Partie::terminer(){
 }
 
 // Méthode permettant d'initialiser la pioche normale
-void PremiereNormale::initierPiocheNormale(){
+void Premiere::initierPiocheNormale(){
     // on alloue une nouvelle carte pour chaque force et couleur (par appel de Pioche::setCarte)
     size_t pos = 0;
     for (auto& c: Couleurs)
@@ -141,7 +142,6 @@ void PremiereNormale::initierPiocheNormale(){
 
 // Constructeur de la classe PremiereNormale
 PremiereNormale::PremiereNormale(){
-    initierPiocheNormale();  // initialisation de la pioche (54 cartes normales)
     // initialisation du tableau de cartes jouées
     for (size_t i = 0; i < NFORCE; i++){
         for (size_t j = 0; i < NCOULEUR; i++)
