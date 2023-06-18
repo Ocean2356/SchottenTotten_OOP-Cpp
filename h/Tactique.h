@@ -246,13 +246,13 @@ private:
 };
 
 // classe correspondant à la variante Tactique de la première édition de Schotten-Totten
-class PremiereTactique final: public Premiere{
+class PremiereTactique: public Premiere{
 public:
     PremiereTactique();
     // Méthode permettant de jouer un tour dans son intégralité (choix de la carte à jouer, revendiquer une ou plusieurs bornes, piocher)
     void jouerTour() override;
     void initierPiocheTactique();  // initialisation de la pioche tactique
-    ~PremiereTactique() = default;
+    virtual ~PremiereTactique() = default;
 
     static const int NCARTETACTIQUE = 10;
 private:

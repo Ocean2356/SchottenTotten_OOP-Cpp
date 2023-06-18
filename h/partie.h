@@ -153,7 +153,6 @@ public:
 protected:
     array<const Carte*, N> cartes;  // array de N cartes
     size_t nbCartes;  // nombre de cartes piochables
-    // vector<Carte> cartesDessous; TODO pour la version tactique (+ mettre une carte aléatoire en dessous de la pioche initialement)
 };
 
 
@@ -163,7 +162,6 @@ public:
     Main(size_t t_max) : taille_max(t_max){}
     Main(const Main& m) = default;
     Main& operator=(const Main& m) = default;
-    bool estVide() const{ return nbCartes == 0; }  // TODO à utiliser dans la version tactique
     size_t getNbCartes() const{ return nbCartes; }
     size_t getTailleMax() const{ return taille_max; }
     const Carte& getCarte(size_t i) const{ return *cartes[i]; }
@@ -289,7 +287,7 @@ private:
     friend class UITactique;
     friend class Agent;  // un agent peut accéder aux attributs de la classe frontiere, en particulier tuiles
     friend class AgentTactique; // un agent tactique peut accéder aux attributs de la classe frontier, en particulier tuiles
-    static const unsigned int nb_tuile = 9; // le nombre de tuiles vaut 9 pour la première édition // TODO changer pour pouvoir gérer la deuxième édition (7 tuiles)
+    static const unsigned int nb_tuile = 9; // le nombre de tuiles vaut 9 pour la première édition
     array<T, nb_tuile> tuiles;  // représente l'ensemble des tuiles
 };
 
