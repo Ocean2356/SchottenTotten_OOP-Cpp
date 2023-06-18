@@ -66,7 +66,7 @@ public:
     const CarteTactique* getCartePoseeCentre() const { return carte_posee_centre; }
 
     // Méthode vérifiant si le centre de la tuile est plein
-    bool centrePlein() const{ return (*carte_posee_centre).getNom().empty(); }
+    bool centrePlein() const{ return carte_posee_centre!=nullptr; }
 
     // permet de vérifier qu'un joueur peut revendiquer une tuile
     bool verifRevendiquable(NumJoueur num_joueur);
@@ -109,7 +109,7 @@ private:
 
     Combinaison determinerCombinaison(NumJoueur num_joueur, const vector <Couleur>& coul, vector <Force>& f);
     friend class UITactique;
-    const CarteTactique* carte_posee_centre;
+    const CarteTactique* carte_posee_centre = nullptr;
 };
 
 class Defausse {

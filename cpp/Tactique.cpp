@@ -34,7 +34,6 @@ string toString(Combat c) {
             return "c_b";
         default:
             throw PartieException("Type de carte tactique inconnue");
-
     }
 }
 
@@ -54,23 +53,23 @@ string toString(Ruse r) {
 }
 
 Couleur TuileTactique::demandeCouleur() const{
-    cout << "Choix de la couleur de la carte";
+    cout << "Choix de la couleur de la carte\n";
     for (auto couleur : Couleurs) {
         cout << "Entrez " << (int) couleur + 1 << " pour choisir la couleur " << toString(couleur) << "\n";
     }
     int choix_couleur = -1;
     while (choix_couleur < 0 || choix_couleur > 7) {
-        cout << "Veuillez choisir une couleur :" << endl;
+        cout << "Veuillez choisir une couleur\n";
         cin >> choix_couleur;
     }
     return (Couleur) (choix_couleur - 1);
 }
 
 Force TuileTactique::demandeForce(unsigned int contrainte) const{
-    cout << "Choix de la force de la carte";
+    cout << "Choix de la force de la carte\n";
     int choix_force = -1;
     while (choix_force < 1 || choix_force > contrainte) {
-        cout << "Veuillez choisir une force entre 1 et" << contrainte << "\n";
+        cout << "Veuillez choisir une force entre 1 et " << contrainte << "\n";
         cin >> choix_force;
     }
     return static_cast<Force>(choix_force);
@@ -118,7 +117,8 @@ void PremiereTactique::jouerTour(){
             nom.push_back(carte_a_jouer[pos_carte_tactique + 10]);
             nom.push_back(carte_a_jouer[pos_carte_tactique + 11]);
             if (nom == toString(Ruse::Chasseur_de_tete)){
-                agent.mettre_ChasseurdeTete();
+                //agent.mettre_ChasseurdeTete();
+                cout << "Desole, l'implementation de cette carte ne fonctionne pas\n";
                 agent.getMainModifiable().jouerCarte(pos_carte_a_jouer);  // on retire la carte de la main
                 Defausse::getInstance().ajouterCarte(&agent.getMain().getCarte(pos_carte_a_jouer));
             }
@@ -128,7 +128,7 @@ void PremiereTactique::jouerTour(){
                 agent.getMainModifiable().jouerCarte(pos_carte_a_jouer);  // on retire la carte de la main
                 Defausse::getInstance().ajouterCarte(&agent.getMain().getCarte(pos_carte_a_jouer));
             }
-            else{  // on devrait pouvoir jouer la carte sur une borne
+            else{  // on devrait pouvoir jouer la carte sur une borne ou au centre
                 size_t pos_borne = carte_a_jouer.find("Borne:");
                 if (pos_borne != std::string::npos){  // si on a trouvé une position de borne
                     // on place la carte sur la borne
@@ -265,8 +265,6 @@ Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>&
     }
     else{
         if(a_carte_normale_en_main) //il a au moins une carte normale
-
-
             cout << "Entrez " << nb_choix++ << " pour jouer une carte normale\n";
 
         if(a_carte_tactique_en_main && nb_cartes_tactiques_jouees <= nb_cartes_tactiques_jouees_autre_joueur)  //il a au moins une carte tactique
@@ -311,23 +309,27 @@ Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>&
         bool carte_troupe = false;
         bool carte_combat = false;
         bool carte_ruse = false;
-        for (auto t : Troupes)
+        for (auto t : Troupes){
             if (nom == toString(t)){
                 carte_troupe = true;
                 break;
             }
+        }
         if (carte_troupe){  // on joue les cartes troupes normalement sur les bornes
             if (this->getIa())
                 choix_borne = ui_tactique.getChoixBorneIa(f, joueur_num);
-            else
+            else{
                 choix_borne = ui_tactique.getChoixBorne(f, joueur_num);
+            }
+
         }
         else{
-            for (auto c : Combats)
+            for (auto c : Combats){
                 if (nom == toString(c)){
                     carte_combat = true;
                     break;
                 }
+            }
             if (carte_combat){
                 if (this->getIa())
                     choix_borne = ui_tactique.getChoixBorneCarteCentreIa(f);
@@ -335,11 +337,12 @@ Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>&
                     choix_borne = ui_tactique.getChoixBorneCarteCentre(f);
             }
             else{
-                for (auto r : Ruses)
+                for (auto r : Ruses){
                     if (nom == toString(r)){
                         carte_ruse = true;
                         break;
                     }
+                }
                 if (!carte_ruse)  // pas de choix de borne pour la carte ruse
                     throw PartieException("Carte tactique inconnue");
                 else{
@@ -377,10 +380,14 @@ void AgentTactique::jouerCarte(Frontiere<class TuileTactique>& frontiere, unsign
     }
     else{
         nb_cartes_tactiques_jouees ++;
-        if (nom_carte == toString(Combat::Colin_Maillard))
+        if (nom_carte == toString(Combat::Colin_Maillard)){
             mettre_ColinMaillard(frontiere.tuiles[pos_borne], carte_tactique);
-        else if (nom_carte == toString(Combat::Combat_de_Boue))
+            return;
+        }
+        else if (nom_carte == toString(Combat::Combat_de_Boue)){
             mettre_CombatdeBoue(frontiere.tuiles[pos_borne], carte_tactique);
+            return;
+        }
         if (nom_carte == toString(Troupe::Joker))
             nb_jokers_joues ++;
         frontiere.tuiles[pos_borne].placerCarte(c, joueur_num);  // on place la carte sur la frontière
@@ -402,21 +409,21 @@ bool TuileTactique::verifRevendiquable(NumJoueur num_joueur) {
     array<vector <Couleur>, 2> couleurs_cartes;
     array<vector <Force>, 2> forces_cartes;
     for (int i=0; i<2; i++){
-        for (auto c: cartes_posees[0]){
+        for (auto c: cartes_posees[i]){
             auto carte_tactique = dynamic_cast<const CarteTactique*> (c);
             if (carte_tactique != nullptr){
                 if (carte_tactique->getInfo() == toString(Troupe::Joker)){
-                    cout << "Choix des caractéristiques du Joker\n";
+                    cout << "Choix des caracteristiques du Joker\n";
                     couleurs_cartes[i].push_back(demandeCouleur());
                     forces_cartes[i].push_back(demandeForce(9));
                 }
                 else if (carte_tactique->getInfo() == toString(Troupe::Espion)){
-                    cout << "Choix des caractéristiques de l'Espion\n";
+                    cout << "Choix des caracteristiques de l'Espion\n";
                     couleurs_cartes[i].push_back(demandeCouleur());
                     forces_cartes[i].push_back(Force::sept);
                 }
                 else if(carte_tactique->getInfo() == toString(Troupe::Porte_Bouclier)){
-                    cout << "Choix des caractéristiques du Porte-Bouclier\n";
+                    cout << "Choix des caracteristiques du Porte-Bouclier\n";
                     couleurs_cartes[i].push_back(demandeCouleur());
                     forces_cartes[i].push_back(demandeForce(3));
                 }
@@ -428,7 +435,7 @@ bool TuileTactique::verifRevendiquable(NumJoueur num_joueur) {
     Combinaison joueur1;
     Combinaison joueur2;
 
-    if (carte_posee_centre->getInfo() == toString(Combat::Colin_Maillard)){
+    if (carte_posee_centre != nullptr && carte_posee_centre->getInfo() == toString(Combat::Colin_Maillard)){
         joueur1 = Combinaison::somme;
         joueur2 = Combinaison::somme;
     }
@@ -436,7 +443,6 @@ bool TuileTactique::verifRevendiquable(NumJoueur num_joueur) {
         joueur1 = determinerCombinaison(num_joueur, couleurs_cartes[0], forces_cartes[0]);
         joueur2 = determinerCombinaison(autre_joueur,  couleurs_cartes[1], forces_cartes[1]);
     }
-
 
 
     if ((int) joueur1 > (int) joueur2)
@@ -731,7 +737,7 @@ bool TuileTactique::verifMemeCouleur(NumJoueur num_joueur, const vector <Couleur
         const Carte *carte = cartes_posees[static_cast<int>(num_joueur)][i];
         auto carteNormale = dynamic_cast<const CarteNormale *>(carte);
         if (carteNormale == nullptr) {
-            if (premiereCarteNormale == nullptr) {
+            if (carteNormale == nullptr) {
                 if (couleur != coul[cpt++])
                     return false;
             } else {
@@ -875,8 +881,9 @@ unsigned int TuileTactique::getSomme(NumJoueur num_joueur, vector <Force>& f) co
 Combinaison TuileTactique::determinerCombinaison(NumJoueur num_joueur, const vector <Couleur>& coul, vector <Force>& f){
     if (verifMemeCouleur(num_joueur, coul))
         if (verifSuite(num_joueur, f))
-            // meilleure combinaison possible (trois cartes de la même couleur qui se suivent
             return Combinaison::suite_couleur;
+            // meilleure combinaison possible (trois cartes de la même couleur qui se suivent
+
         else
             // trois cartes de la même couleur, troisième meilleure combinaison
             return Combinaison::couleur;

@@ -332,7 +332,7 @@ void UITactique::afficherCote(const TuileTactique &t, size_t cote) const{
 // Méthode permettant d'afficher l'état d'une tuile
 void UITactique::afficherEtatBorne(const TuileTactique &t, size_t num_borne) const{
     if (t.carte_posee_centre != nullptr)
-        cout << " " << t.carte_posee_centre << " ";
+        cout << " " << *t.carte_posee_centre << " ";
     else
         cout << "      ";  // utilisé pour centrer l'affichage
     if (t.revendiquee == TuileRevendiquee::revendiquee_joueur1)
