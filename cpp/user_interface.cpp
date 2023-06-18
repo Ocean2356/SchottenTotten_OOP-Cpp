@@ -6,7 +6,7 @@ non définies dans partie.h et tactique.h pour les classe UI et UITactique
 ***********************************************************************************************************************/
 
 #include "../h/partie.h"
-#include "../h/tactique.h"
+#include "../h/Tactique.h"
 
 
 void UI::afficherFrontiere(const Frontiere<class Tuile>& f) const{
@@ -425,4 +425,142 @@ Pos UITactique::getChoixBorneIa(const Frontiere<class TuileTactique>& f, NumJoue
     std::default_random_engine random_eng(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> distrib{0, (int) borne_jouable.size() - 1};
     return (char) borne_jouable[distrib(random_eng)];
+}
+
+GUI::GUI(QWidget *parent)
+    : QMainWindow(parent),
+    m_selectedCardIndex(-1),
+    m_selectedBorneIndex(-1)
+{
+    // Set up the main window
+    setWindowTitle("Schotten Totten");
+    QWidget *centralWidget = new QWidget(this);
+    setCentralWidget(centralWidget);
+
+    // Create the grid layout
+    gridLayout = new QGridLayout(centralWidget);
+    gridLayout->setSpacing(10);
+
+    // Create labels for displaying information
+    frontiereLabel = new QLabel("Frontiere:", centralWidget);
+    coteLabel = new QLabel("Cote:", centralWidget);
+    etatBorneLabel = new QLabel("Etat Borne:", centralWidget);
+
+    // Create buttons for card choices
+    for (int i = 0; i < 6; i++)
+    {
+        cardButtons[i] = new QPushButton("Card " + QString::number(i + 1), centralWidget);
+        connect(cardButtons[i], SIGNAL(clicked()), this, SLOT(onCardClicked()));
+    }
+
+    // Create buttons for borne choices
+    for (int i = 0; i < 9; i++)
+    {
+        borneButtons[i] = new QPushButton("Borne " + QString::number(i + 1), centralWidget);
+        connect(borneButtons[i], SIGNAL(clicked()), this, SLOT(onBorneClicked()));
+    }
+
+    // Add the widgets to the grid layout
+    gridLayout->addWidget(frontiereLabel, 0, 0);
+    gridLayout->addWidget(coteLabel, 0, 1);
+    gridLayout->addWidget(etatBorneLabel, 0, 2);
+
+    for (int i = 0; i < 6; i++)
+    {
+        gridLayout->addWidget(cardButtons[i], i + 1, 0);
+    }
+
+    for (int i = 0; i < 9; i++)
+    {
+        gridLayout->addWidget(borneButtons[i], i + 1, 2);
+    }
+}
+
+void GUI::onCardClicked()
+{
+    QPushButton *button = qobject_cast<QPushButton *>(sender());
+    if (button)
+    {
+        // Retrieve the card index from the button's text
+        QString buttonText = button->text();
+        // The button's text is of the form "Card X", where X is the card index
+        // We retrieve the index by removing the "Card " prefix and converting the remaining string to an integer
+        m_selectedCardIndex = buttonText.mid(5).toInt() - 1;
+
+        // Handle the card selection
+        // TODO: Implement the logic for handling the card selection
+    }
+}
+
+void GUI::onBorneClicked()
+{
+    QPushButton *button = qobject_cast<QPushButton *>(sender());
+    if (button)
+    {
+        // Retrieve the borne index from the button's text
+        QString buttonText = button->text();
+        m_selectedBorneIndex = buttonText.mid(6).toInt() - 1;
+
+        // Handle the borne selection
+        // TODO: Implement the logic for handling the borne selection
+    }
+}
+
+Pos GUI::getChoixCarte(Main& main) 
+{
+    // Create a signal-slot connection to handle the card selection
+    QEventLoop loop;
+    connect(this, SIGNAL(cardSelected(int)), &loop, SLOT(quit()));
+
+    // Wait for the card selection signal to be emitted
+    loop.exec();
+
+    // Retrieve the selected card index
+    int selectedCard = m_selectedCardIndex;
+
+    // Clear the selected card index for future selections
+    m_selectedCardIndex = -1;
+
+    // Return the chosen position
+    return selectedCard;
+}
+
+Pos GUI::getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num)
+{
+    // Create a signal-slot connection to handle the borne selection
+    QEventLoop loop;
+    connect(this, SIGNAL(borneSelected(int)), &loop, SLOT(quit()));
+
+    // Wait for the borne selection signal to be emitted
+    loop.exec();
+
+    // Retrieve the selected borne index
+    int selectedBorne = m_selectedBorneIndex;
+
+    // Clear the selected borne index for future selections
+    m_selectedBorneIndex = -1;
+
+    // Return the chosen position
+    return selectedBorne;
+}
+
+Movement GUI::getChoixBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num, TableauJouee tab)
+{
+    // Create a signal-slot connection to handle the borne claims selection
+    QEventLoop loop;
+    connect(this, SIGNAL(borneClaimsSelected(Movement)), &loop, SLOT(quit()));
+
+    // Wait for the borne claims selection signal to be emitted
+    loop.exec();
+
+    // Retrieve the selected borne claims movement
+    Movement selectedMovement = m_selectedMovement;
+
+    // Clear the selected borne claims movement for future selections
+    m_selectedMovement = Movement();
+
+    // TODO: Implement the logic to process the selected borne claims movement
+
+    // Return the selected movement
+    return selectedMovement;
 }

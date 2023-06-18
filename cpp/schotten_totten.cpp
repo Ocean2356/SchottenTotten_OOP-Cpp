@@ -7,7 +7,7 @@ et méthodes déclarées mais non définies dans schotten_totten.h
 
 
 #include "../h/schotten_totten.h"
-#include "../h/tactique.h"
+#include "../h/Tactique.h"
 
 // liste des éditions
 std::initializer_list<Edition> Editions ={Edition::Premiere, Edition::Deuxieme};

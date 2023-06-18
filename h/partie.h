@@ -16,6 +16,14 @@ représentant les cartes, la pioche, la main, les tuiles, la frontière, les age
 #include <random>
 #include <chrono>
 
+#include <QMainWindow>
+#include <QGridLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QEventLoop>
+#include <QObject>
+
 class Joueur;
 class Tuile;
 
@@ -375,6 +383,44 @@ public:
     virtual Movement getChoixBornesARevendiquerIa(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num, TableauJouee tab);
 };
 
+class GUI : public QMainWindow, public UI
+{
+    Q_OBJECT
+
+public:
+    GUI(QWidget *parent = nullptr);
+    void afficherFrontiere(const Tuile &t, size_t num_borne) const {return;}
+    void afficherCote(const Tuile &t, size_t cote) const {return;}
+    void afficherEtatBorne(const Tuile &t, size_t num_borne) const {return;}
+    Pos getChoixCarte(Main& main);
+    // Pos getChoixCarteIa(Main& main);
+    Pos getChoixBorne(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
+    // Pos getChoixBorneIa(const Frontiere<class Tuile>& f, NumJoueur joueur_num);
+
+    Movement getChoixBornesARevendiquer(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num, TableauJouee tab) override;
+    // Movement getChoixBornesARevendiquerIa(Frontiere<class Tuile>& frontiere, NumJoueur joueur_num, TableauJouee tab) override;
+
+signals:
+    void cardSelected(int cardIndex);
+    void borneSelected(int borneIndex);
+    void borneClaimsSelected(Movement movement);
+
+private slots:
+    void onCardClicked();
+    void onBorneClicked();
+
+private:
+    QGridLayout *gridLayout;
+    QLabel *frontiereLabel;
+    QLabel *coteLabel;
+    QLabel *etatBorneLabel;
+    QPushButton *cardButtons[6];
+    QPushButton *borneButtons[9];
+
+    int m_selectedCardIndex;
+    int m_selectedBorneIndex;
+    Movement m_selectedMovement;
+};
 
 class Agent{  // classe représentant un agent. L'agent peut agir sur la partie (jouer et piocher des cartes, revendiquer des bornes...)
 public:
@@ -407,7 +453,8 @@ public:
     Main getMain() const{ return main; }
     virtual ~Agent() = default;
 private:
-    UI ui = UI();
+    // UI ui = UI();
+    UI ui = GUI();
     bool ia;
     Main main;  // un agent a une main
 };
