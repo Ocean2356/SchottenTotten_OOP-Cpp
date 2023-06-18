@@ -243,23 +243,35 @@ Movement AgentTactique::choisirCarteAJouer(const Frontiere<class TuileTactique>&
     unsigned int nb_choix = 1;
     bool a_carte_normale_en_main = !pos_cartes_normales.empty();
     bool a_carte_tactique_en_main = !pos_cartes_tactiques.empty();
-    if(a_carte_normale_en_main) //il a au moins une carte normale
-        cout << "Entrez " << nb_choix++ << " pour jouer une carte normale\n";
-
-    if(a_carte_tactique_en_main && nb_cartes_tactiques_jouees <= nb_cartes_tactiques_jouees_autre_joueur)  //il a au moins une carte tactique
-        cout << "Entrez " << nb_choix++ << " pour jouer une carte tactique\n";
-
-    if (!a_carte_normale_en_main)
-        cout << "Entrez " << nb_choix << " pour ne rien jouer ce tour-ci";
-    bool test_saisie = false;
-    string choix;
     unsigned int choix_carte;
-    while (!test_saisie){
-        cout << "Votre choix : ";
-        cin >> choix;
-        if ((unsigned int) (choix[0] - '0') >= 1 && (unsigned int) (choix[0] - '0') <= nb_choix) {
-            test_saisie = true;
-            choix_carte = (unsigned int) (choix[0] - '0');
+    if (this->getIa()){
+        if (a_carte_normale_en_main)
+            choix_carte = 1;
+        else if (a_carte_tactique_en_main)
+            choix_carte = 2;
+        else
+            return mvt;
+    }
+    else{
+        if(a_carte_normale_en_main) //il a au moins une carte normale
+
+
+            cout << "Entrez " << nb_choix++ << " pour jouer une carte normale\n";
+
+        if(a_carte_tactique_en_main && nb_cartes_tactiques_jouees <= nb_cartes_tactiques_jouees_autre_joueur)  //il a au moins une carte tactique
+            cout << "Entrez " << nb_choix++ << " pour jouer une carte tactique\n";
+
+        if (!a_carte_normale_en_main)
+            cout << "Entrez " << nb_choix << " pour ne rien jouer ce tour-ci";
+        bool test_saisie = false;
+        string choix;
+        while (!test_saisie){
+            cout << "Votre choix : ";
+            cin >> choix;
+            if ((unsigned int) (choix[0] - '0') >= 1 && (unsigned int) (choix[0] - '0') <= nb_choix) {
+                test_saisie = true;
+                choix_carte = (unsigned int) (choix[0] - '0');
+            }
         }
     }
     Pos carte_a_jouer = -1;
@@ -567,14 +579,14 @@ void AgentTactique::actionStrategeBansheeTraitre(Frontiere<class TuileTactique>&
     NumJoueur cote = num_joueur;
 
     // on ne peut pas récupérer de cartes tactiques pour le traître
-    bool tactique_possible = nomTactique == toString(Ruse::Traitre);
+    bool tactique_possible = nomTactique != toString(Ruse::Traitre);
 
     unsigned int numTuile = 0;
     if (nomTactique == toString(Ruse::Banshee) || nomTactique == toString(Ruse::Traitre))
         cote = (NumJoueur) (((int) num_joueur + 1) % 2);
 
     for (int i = 0; i < frontiere.getNbTuile(); i++)
-        if (!frontiere.tuiles[(int) cote].estRevendiquee() &&
+        if (!frontiere.tuiles[i].estRevendiquee() &&
             !frontiere.tuiles[(int) cote].getCartesPosees(cote).empty()) {
             // la tuile n'est pas revendiquée et a au moins une carte
             if (tactique_possible) {  // si on peut récupérer une carte tactique, on peut agir sur cette tuile
