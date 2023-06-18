@@ -6,7 +6,7 @@ non définies dans partie.h et tactique.h pour les classe UI et UITactique
 ***********************************************************************************************************************/
 
 #include "../h/partie.h"
-#include "../h/tactique.h"
+#include "../h/Tactique.h"
 
 
 void UI::afficherFrontiere(const Frontiere<class Tuile>& f) const{

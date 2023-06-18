@@ -1,5 +1,5 @@
 
-#include "../h/tactique.h"
+#include "../h/Tactique.h"
 #include <iostream>
 #include <string>
 

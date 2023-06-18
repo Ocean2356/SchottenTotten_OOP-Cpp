@@ -7,7 +7,7 @@ et méthodes déclarées mais non définies dans partie.h (sauf pour les classe 
 
 
 #include "../h/partie.h"
-#include "../h/tactique.h"
+#include "../h/Tactique.h"
 
 std::initializer_list<Couleur> Couleurs ={Couleur::Rouge, Couleur::Marron, Couleur::Jaune, Couleur::Vert,
                                            Couleur::Bleu, Couleur::Violet};  // liste des couleurs

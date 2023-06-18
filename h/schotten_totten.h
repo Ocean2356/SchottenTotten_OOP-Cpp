@@ -12,7 +12,7 @@ de parties.
 
 #include <string>
 #include <array>
-#include "../h/tactique.h"
+#include "../h/Tactique.h"
 
 using Joueurs = array<Joueur, 2>;
 
