@@ -12,7 +12,7 @@ de parties.
 
 #include <string>
 #include <array>
-#include "../h/partie.h"
+#include "../h/Tactique.h"
 
 using Joueurs = array<Joueur, 2>;
 
@@ -68,7 +68,9 @@ public:
     void finirJeu() const;
     ~Jeu() = default;
 private:
+    void setIaPlayers(const bool& ia) { only_ia_players = ia;}
     Joueurs joueurs;  // array de deux joueurs
+    bool only_ia_players; // est vrai si il y a deux joueurs ia, sert à ralentir le jeu pour que l'utilisateur humain puisse regarder la partie
     EditionProducer editionProducer;  // utilisé pour le choix de l'édition et de la variante
 };
 

@@ -7,6 +7,7 @@ et méthodes déclarées mais non définies dans schotten_totten.h
 
 
 #include "../h/schotten_totten.h"
+#include "../h/Tactique.h"
 
 // liste des éditions
 std::initializer_list<Edition> Editions ={Edition::Premiere, Edition::Deuxieme};
@@ -90,8 +91,8 @@ Partie* PremiereFactory::getPartie(Variante variante){
     switch (variante){
         case Variante::Normale:
             return new PremiereNormale();
-//        case Variante::Tactique:
-//            return new PremiereTactique();
+        case Variante::Tactique:
+            return new PremiereTactique();
 //        case Variante::Experts:
 //            return new PremiereExperts();
         default:
@@ -127,26 +128,43 @@ AbstractEdition* EditionProducer::getEdition(Edition edition){
 }
 
 
-// Méthode permettant de saisir les noms des joueurs  // TODO ajouter choix ia/humain pour chaque joueur
+// Méthode permettant de saisir les noms des joueurs
 void Jeu::commencerJeu(){
     array<string, 2> nom_preced;
+    bool only_ia = true;
     for (size_t i = 0; i < joueurs.size(); i++){
         string nom;
         bool test_nom = false;
-        while (!test_nom){
+        while (!test_nom) {
             test_nom = true;
             cout << "Entrez le nom du joueur " << i + 1 << ": ";
             getline(cin, nom);
             for (const auto &n: nom_preced)
-                if (n == nom){
+                if (n == nom) {
                     cout << "Nom deja utilise\n";
                     test_nom = false;
                     break;
                 }
         }
         nom_preced[i] = nom;
-        joueurs[i] = Joueur(nom);
+        string ia;
+        bool est_ia;
+        bool test_saisie = false;
+        while (!test_saisie){
+            cout << "Entrez 0 pour que le joueur " << nom << " soit un humain, 1 pour une ia: ";
+            getline(cin, ia);
+            if ((unsigned int) (ia[0] - '0') == 0 || (unsigned int) (ia[0] - '0') == 1) {
+                est_ia = (bool) (ia[0] - '0');
+                test_saisie = true;
+            }
+        }
+        joueurs[i] = Joueur(nom, est_ia);
+        if (!est_ia)
+            only_ia = false;
+        joueurs[i].getAgent().setIa(est_ia);
+        joueurs[i].getAgentTactique().setIa(est_ia);
     }
+    this->setIaPlayers(only_ia);
 }
 
 // Méthode permettant de déterminer l'ordre de jeu des joueurs qui retourne un ordre (array<Joueurs*, 2>)
@@ -181,13 +199,19 @@ void Jeu::jouerPartie(Edition edition, Variante variante){
     AbstractEdition* abstractEdition = editionProducer.getEdition(edition);
     Partie* partie = abstractEdition->getPartie(variante);
 
+
     // Détermination de l'ordre de jeu des joueurs et initialisations
     Ordre ordre = determinerOrdre();
     partie->commencer(ordre);
-
     // déroulement de la partie tour par tour jusqu'à ce que la partie soit terminée
-    while (!partie->testerFin())
+    while (!partie->testerFin()) {
         partie->jouerTour();
+        if (only_ia_players) {
+            string attente;
+            cout << "Appuyez sur entree pour continuer: ";
+            getline(cin, attente);
+        }
+    }
 
     // affichage du résultat de la partie et mise à jour des scores des joueurs
     traiterResultat(ordre, partie->terminer());
@@ -227,7 +251,7 @@ void Jeu::finirJeu() const{
     unsigned int score_max = 0;
     for (size_t i = 0; i < getNbJoueurs(); i++){
         unsigned int score = getScore(i);
-        cout << "Le joueur " << getNom(i) << " a obtenu " << score << "points.\n";
+        cout << "Le joueur " << getNom(i) << " a obtenu " << score << " points.\n";
         if (score_max < score){
             score_max = score;
             joueur_gagnant = i;

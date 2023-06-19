@@ -30,7 +30,7 @@ int main(){
         }
         j.finirJeu();
 
-    } catch (PartieException &e){
+    }catch (PartieException &e){
         cout << "Erreur : " << e.getInfo() << "\n";
     }
     return 0;
